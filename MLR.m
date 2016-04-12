@@ -4,13 +4,13 @@ clear;
 load('KexJobbData.mat')
 depMarket = 1;                 % Dependent Market
 indepMarket = 2:40;            % Possible independent markets
-nPred = 3;                    % How many predictors    
+nPred = 3;                     % How many predictors    
 predTime = 40;                 % How many days to predict
 lag = 1;                       % How many days ago we look at the indep markets
 
 
 % Specify Time Period
-startTrain = '05-Jun-2008';          % Start
+startTrain = '01-May-2004';          % Start
 endTrain = '01-Jul-2008';            % End
 
 % Use this time period
@@ -66,7 +66,7 @@ figure()
 for ip = 1:3
     p(ip) = subplot(3,1,ip);
     hold on;
-    plot(datesTrain(1:end), [yTrain yHat(:,ip)])
+    plot(datesTrain(1+lag:end), [yTrain yHat(:,ip)])
     ylabel('$$$');
     xlabel('Time [Days]');
     title(['Multiple Linear Regression Fit, ' method(ip)]);
