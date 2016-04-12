@@ -10,8 +10,8 @@ lag = 1;                       % How many days ago we look at the indep markets
 
 
 % Specify Time Period
-startTrain = '01-May-2004';          % Start
-endTrain = '01-Jul-2008';            % End
+startTrain = '01-May-2004';
+endTrain = '01-Jul-2008';
 
 % Use this time period
 [dates, closingPrice] = removeNaN(dates, closingPrice);
