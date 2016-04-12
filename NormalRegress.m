@@ -1,7 +1,7 @@
 function [b ,yHat, pred] = NormalRegress(yTrain, xTrain, nPred)
 
 % Choose the nPred best predictors
-[pred] = choosePred(xTrain, yTrain, nPred);
+[pred] = choosePred(xTrain, yTrain, nPred , 'Normal');
 xTrain = xTrain(:, pred);
 XTrain = [ones(size(xTrain(:,1))) xTrain];
 
