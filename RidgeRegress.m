@@ -1,4 +1,4 @@
-function [b, yHat, pred,cvMSE] = RidgeRegress(yTrain, xTrain, nPred)
+function [b, yHat, pred] = RidgeRegress(yTrain, xTrain, nPred)
 
 % Choose the nPred best predictors
 [pred] = choosePred(xTrain, yTrain, nPred);
@@ -18,11 +18,6 @@ for i = 1:length(lambda)
     cvMSE(i) = crossval('MSE',XRidge,yRidge,'predfun',yFit);
 end
 [junk, idx] = min(cvMSE);
-
-
-% Plot params-lambda
-figure()
-plot(lambda,b)
 
 
 % Solve with lsqr
