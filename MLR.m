@@ -4,21 +4,21 @@ clear;
 load('KexJobbData.mat')
 depMarket = 1;                 % Dependent Market
 indepMarket = 2:40;            % Possible independent markets
-nPred = 10;                     % How many predictors    
+nPred = 3;                    % How many predictors    
 predTime = 40;                 % How many days to predict
 lag = 1;                       % How many days ago we look at the indep markets
 
 
 % Specify Time Period
 startTrain = '05-Jun-2008';          % Start
-endTrain = '01-Jul-2008';            % Slut
+endTrain = '01-Jul-2008';            % End
 
 % Use this time period
 [dates, closingPrice] = removeNaN(dates, closingPrice);
 indS = find(dates > datenum(startTrain, 'dd-mmm-yyyy'), 1);
 indE = find(dates > datenum(endTrain, 'dd-mmm-yyyy'), 1);
-datesTrain = dates(indS+lag:indE);
-datesPred = dates(indE+lag:indE+predTime);
+datesTrain = dates(indS:indE);
+datesPred = dates(indE+1:indE+predTime);
 clPr = closingPrice(indS:indE+predTime, [depMarket indepMarket]);
 
 %% Regression
@@ -45,8 +45,8 @@ method{3} = 'Generalized Ridge';
 
 
 %% Prediction
-yVal = clPr(end-predTime+lag:end,1);
-xVal = clPr(end-predTime:end-lag,pred1);
+yVal = clPr(end-predTime+1:end,1);
+xVal = clPr(end-predTime+1-lag:end-lag,pred1);
 %yVal = diff(yVal);
 %xVal = diff(xVal);
 
@@ -63,7 +63,7 @@ yPred(:,3) = XVal*b3;
 
 %% Plots
 figure()
-for ip = 1:3                              % Plotta alla Anpassningar
+for ip = 1:3
     p(ip) = subplot(3,1,ip);
     hold on;
     plot(datesTrain(1:end), [yTrain yHat(:,ip)])
@@ -89,7 +89,7 @@ for ip = 1:3
 end
 
 
-% Hejdå tjafs
+% Clear variables
 clear closingPrice begT endT indS indE nIndep p p2
 
 %}
