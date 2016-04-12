@@ -5,9 +5,11 @@ pred = choosePred(xTrain, yTrain, nPred, 'Ridge');
 xTrain = xTrain(:,pred);
 XTrain = [ones(size(xTrain(:,1))) xTrain];
 
-% Implement Ridge
+% Implement Ridge, don't penalize the intercept
 lambda = 1e-3;
-XRidge = [XTrain; (lambda*eye(nPred+1))];
+ridgeEye = eye(nPred+1);
+ridgeEye(1,1) = 0;
+XRidge = [XTrain; (lambda*ridgeEye)];
 yRidge = [yTrain; zeros(nPred+1,1)];
 
 
