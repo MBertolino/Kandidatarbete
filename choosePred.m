@@ -2,6 +2,8 @@ function [bestPred] = choosePred(x, y, nPred, variation)
 
 [rowx, colx] = size(x);
 
+
+
 % Find subset of predictors: bestPred
 cvMSE = zeros(length(colx),1);
 bestPred = [];
@@ -17,7 +19,11 @@ for ip = 1:nPred
             elseif strcmpi(variation,'Ridge')
                 lambda = 1e-3;
                 [rowPred, colPred] = size([bestPred in]);
-                XRidge = [X; (lambda*eye(colPred+1))];
+                
+                % Don't penalize the intercept
+                ridgeEye = eye(colPred+1);
+                ridgeEye(1,1) = 0;
+                XRidge = [X; (lambda*ridgeEye)];
                 yRidge = [y; zeros(colPred+1,1)];
                 b = lsqr(XRidge,yRidge);
                 

@@ -6,12 +6,15 @@ xTrain = xTrain(:,pred);
 XTrain = [ones(size(xTrain(:,1))) xTrain];
 
 % Find the best lambda with cross validation
-%lambda = linspace(0,1e-1,1e3);
-lambda = 1e-3;
+lambda = linspace(0,1e-1,1e3);
+%lambda = 1e-3;
 cvMSE = zeros(size(lambda));
+ridgeEye = eye(nPred+1);
+ridgeEye(1,1) = 0;
 for i = 1:length(lambda)
-    XRidge = [XTrain; (lambda(i)*eye(nPred+1))];
+    xRidge = [XTrain; (lambda(i)*ridgeEye)];
     yRidge = [yTrain; zeros(nPred+1,1)];
+    XRidge = [ones(size(xRidge(:,1)))  xRidge];
     b(:,i) = lsqr(XRidge,yRidge);
     
     yFit = @(XRidge,yRidge,XTest)(XTest*b(:,i)); % Anropa crossval
@@ -19,9 +22,8 @@ for i = 1:length(lambda)
 end
 [junk, idx] = min(cvMSE);
 
-
 % Solve with lsqr
-XRidge = [XTrain; (lambda(idx)*eye(nPred+1))];
+XRidge = [XTrain; (lambda(idx)*ridgeEye)];
 yRidge = [yTrain; zeros(nPred+1,1)];
 b = lsqr(XRidge,yRidge);
 
