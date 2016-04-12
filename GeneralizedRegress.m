@@ -3,7 +3,7 @@ function [b, yHat, pred] = GeneralizedRegress(yTrain, xTrain, nPred)
 % Choose the nPred best predictors
 pred = choosePred(xTrain, yTrain, nPred);
 xTrain = xTrain(:,pred);
-XTrain = [ones(size(xTrain(:,1))) xTrain];  
+XTrain = [ones(size(xTrain(:,1))) xTrain];
 
 % Implement Ridge
 lambda = 1e-3;
