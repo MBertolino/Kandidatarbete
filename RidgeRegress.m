@@ -1,7 +1,8 @@
-function [b, yHat, pred] = RidgeRegress(yTrain, xTrain, nPred)
+function [b, yHat, pred,cvMSE] = RidgeRegress(yTrain, xTrain, nPred)
 
 % Choose the nPred best predictors
-[xTrain, pred] = choosePred(xTrain, yTrain, nPred); % Välj nPred stycken bästa marknader med crossval (function)
+[pred] = choosePred(xTrain, yTrain, nPred); % Välj nPred stycken bästa marknader med crossval (function)
+xTrain = xTrain(:,pred);
 XTrain = [ones(size(xTrain(:,1))) xTrain];
 
 % Find the best lambda with cross validation
@@ -17,8 +18,9 @@ for i = 1:length(lambda)
     cvMSE(i) = crossval('MSE',XRidge,yRidge,'predfun',yFit);
 end
 [junk, idx] = min(cvMSE);
-lambda_min = lambda(idx)
 
+
+% Plot params-lambda
 figure()
 plot(lambda,b)
 

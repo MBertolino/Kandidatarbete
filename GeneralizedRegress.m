@@ -1,7 +1,8 @@
 function [b, yHat, pred] = GeneralizedRegress(yTrain, xTrain, nPred)
 
 % Choose the nPred best predictors
-[xTrain, pred] = choosePred(xTrain, yTrain, nPred);
+pred = choosePred(xTrain, yTrain, nPred);
+xTrain = xTrain(:,pred);
 XTrain = [ones(size(xTrain(:,1))) xTrain];  
 
 % Implement Ridge
