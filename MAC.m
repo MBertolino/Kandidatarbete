@@ -1,16 +1,16 @@
 %clear
 % Load Data
 load('KexJobbData.mat')
-ClPr = closingPrice(:,1);
+clPr = closingPrice(:,1);
 
 %% Process data to ajust for NaNs
 
-[dates2, ClPr] = removeNaN(dates, ClPr);
+[dates2, clPr] = removeNaN(dates, clPr);
 
 %% Dependence
 
-Cov = cov(ClPr);
-Corr = corr(ClPr);
+Cov = cov(clPr);
+Corr = corr(clPr);
 
 %% Moving Averages
 % Parameters
@@ -33,14 +33,14 @@ short = 50;
 % coeffS = repmat(1-lambdaS, 1, short).^(1:short);
 % coeffS = coeffS/sum(coeffS);
 
-avgClL = filter(coeffL, 1, ClPr);
-avgClS = filter(coeffS, 1, ClPr);
+avgClL = filter(coeffL, 1, clPr);
+avgClS = filter(coeffS, 1, clPr);
 
 % Positioning
 trend = avgClS - avgClL;
 gamma = ones(size(trend(2:end,:)))*(-1);
 gamma(trend(2:end,:) > 0) = 1;
-deltaP = ClPr(2:end,:)-ClPr(1:end-1,:);
+deltaP = clPr(2:end,:)-clPr(1:end-1,:);
 ret = deltaP.*gamma;
 profit = cumsum(ret);
 
@@ -48,7 +48,7 @@ profit = cumsum(ret);
 % Closing Price and Moving Averages
 figure();
 hold on;
-plot(dates2,ClPr)
+plot(dates2,clPr)
 plot(dates2, [avgClL avgClS]);
 legend(['Closing Prices'], ['Moving Average ' num2str(long)], ...
     ['Moving Average ' num2str(short)], 'location','best');
