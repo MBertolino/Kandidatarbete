@@ -10,7 +10,7 @@ lag = 1;                       % How many days ago we look at the indep markets
 
 
 % Specify Time Period
-startTrain = '01-May-2008';
+startTrain = '01-Jun-2006';
 endTrain = '01-Jul-2008';
 
 % Use this time period
