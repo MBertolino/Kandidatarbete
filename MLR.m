@@ -10,7 +10,7 @@ lag = 1;                       % How many days ago we look at the indep markets
 
 
 % Specify Time Period
-startTrain = '01-May-2004';
+startTrain = '01-May-2008';
 endTrain = '01-Jul-2008';
 
 % Use this time period
@@ -58,7 +58,6 @@ XVal = [ones(size(xVal(:,1))) xVal];
 yPred(:,1) = XVal*b1;
 yPred(:,2) = XVal*b2;
 yPred(:,3) = XVal*b3;
-
 
 
 %% Plots
