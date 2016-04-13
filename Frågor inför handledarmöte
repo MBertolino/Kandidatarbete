@@ -1,0 +1,6 @@
+1. Ska vi göra en egen crossval-funktion eller använder vi den existerande fel?
+2. Kan vi använda alla 40 tillgångar som prediktorer eller måste vi begränsa oss till ett visst antal?
+  (Stanford har inte med alla prediktorer eftersom de inte har tillräckligt med datapunkter, men det har vi)
+3. Får/Ska vi använda Lynx logga på rapporten?
+4. Ska vi ha med intercept kolumnen i ridge?
+
