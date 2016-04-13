@@ -28,18 +28,18 @@ for i = 1:length(lambda)
         trIdx = C.training(icv);
         teIdx = C.test(icv);
         
+        % Solve with lsqr
         bicv = lsqr(XRidge(trIdx,:),yRidge(trIdx));
         ytest = XRidge(teIdx,:)*bicv;
         err(icv) = mean(abs(ytest-yRidge(teIdx)).^2);
     end
-    cvMSE(i) = mean(err);
+    cvMSE(i) = mean(err);                   % optimal lambda index
         
 end
 [junk, idx] = min(cvMSE);
 
 % Solve with lsqr
 XRidge = [XTrain; (lambda(idx)*ridgeEye)];
-yRidge = [yTrain; zeros(nPred+1,1)];
 b = lsqr(XRidge,yRidge);
 
 yHat = XTrain*b;
