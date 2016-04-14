@@ -25,7 +25,7 @@ yTrain = clPr(end,1) - clPr(end-predTime,1);
 
 for i = indepMarket
     for j = lag
-        xTrain(i,j) = clPr(end-predTime) - clPr(end-predTime-j);
+        xTrain(i,j) = clPr(end-predTime) - clPr(end-predTime-);
     end
 end
 
@@ -45,19 +45,19 @@ method{1} = 'Regress';
 % [b2, yHat(:,2)] = RidgeRegress(yTrain, XTrain);
 
 
-% %% Prediction
-% yVal = clPr(end-predTime+1:end,1);
-% xVal = clPr(end-predTime+1-lag:end-lag,:);
-% 
-% % Standardize data
-% %xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
-% %xVal = (xVal - mu')./sigma';
-% 
-% % Prediction
-% XVal = [ones(size(xVal(:,1))) xVal];
-% yPred(:,1) = XVal*b1;
-% % yPred(:,2) = XVal*b2;
-% 
+%% Prediction
+yVal = clPr(end-predTime+1:end,1);
+xVal = clPr(end-predTime+1-lag:end-lag,:);
+
+% Standardize data
+%xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
+%xVal = (xVal - mu')./sigma';
+
+% Prediction
+XVal = [ones(size(xVal(:,1))) xVal];
+yPred(:,1) = XVal*b1;
+% yPred(:,2) = XVal*b2;
+
 
 %% Plots
 figure()
@@ -73,8 +73,6 @@ for ip = 1:1
     datetick('x')
     
 end
-
-%{
 figure()
 for ip = 1:1
     %p2(ip) = subplot(2,1,ip);
