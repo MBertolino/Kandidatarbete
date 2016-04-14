@@ -18,8 +18,8 @@ long = 200;
 short = 50;
 
 % % Normal No Weights (SMA)
-% coeffL = ones(1, long)/long;
-% coeffS = ones(1, short)/short;
+% wLong = ones(1, long)/long;
+% wShort = ones(1, short)/short;
 
 
 %Linear Weights (sums of digits)
@@ -27,15 +27,15 @@ wLong = 1/((long+1)*(long/2)) * flipud((1:long)');
 wShort = 1/((short+1)*(short/2)) * flipud((1:short)');
 
 % % Exponential Weights (EWMA)
-% lambdaL = 2/(long + 1); % Smoothing Param
-% coeffL = repmat(1-lambdaL, 1, long).^(1:long);
-% coeffL = coeffL/sum(coeffL);
-% lambdaS = 2/(short + 1); % Smoothing Param
-% coeffS = repmat(1-lambdaS, 1, short).^(1:short);
-% coeffS = coeffS/sum(coeffS);
+% alphaL = 2/(long + 1); % Smoothing Param
+% wLong = repmat(1-alphaL, 1, long).^(1:long);
+% wLong = wLong/sum(wLong);
+% alphaS = 2/(short + 1); % Smoothing Param
+% wShort = repmat(1-alphaS, 1, short).^(1:short);
+% wShort = wShort/sum(wShort);
 
-avgClL = filter(coeffL, 1, clPr);
-avgClS = filter(coeffS, 1, clPr);
+avgClL = filter(wLong, 1, clPr);
+avgClS = filter(wShort, 1, clPr);
 
 % Positioning
 trend = avgClS - avgClL;
