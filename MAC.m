@@ -21,9 +21,10 @@ short = 50;
 % coeffL = ones(1, long)/long;
 % coeffS = ones(1, short)/short;
 
-% Weighted (WMA)
-% coeffL = (long + 1 - (1:long))/sum(1:long);
-% coeffS = (short + 1 - (1:short))/sum(1:short);
+
+%Linear Weights (sums of digits)
+wLong = 1/((long+1)*(long/2)) * flipud((1:long)');
+wShort = 1/((short+1)*(short/2)) * flipud((1:short)');
 
 % % Exponential Weights (EWMA)
 % lambdaL = 2/(long + 1); % Smoothing Param
