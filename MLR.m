@@ -4,67 +4,58 @@ clear;
 load('KexJobbData.mat')
 depMarket = 1;                 % Dependent Market
 indepMarket = 1;               % Possible independent markets
-predTime = 20;                 % How many days to predict
-lag = 1:5;                     % How many days ago we look at the indep markets
+predTime = 2;                 % How many days to predict
+lag = 1:2;                       % How many days ago we look at the indep markets
 
-
-% Specify Time Period
-startTrain = '01-Jun-2006';
-endTrain = '01-Jul-2008';
 
 % Use this time period
-[dates, closingPrice] = removeNaN(dates, closingPrice);
-indS = find(dates > datenum(startTrain, 'dd-mmm-yyyy'), 1);
-indE = find(dates > datenum(endTrain, 'dd-mmm-yyyy'), 1);
-datesTrain = dates(indS:indE);
-datesPred = dates(indE+1:indE+predTime);
-clPr = closingPrice(indS:indE+predTime, [depMarket indepMarket]);
+[dates, clPr] = removeNaN(dates, closingPrice);
 
 %% Regression
-yTrain = clPr(end,1) - clPr(end-predTime,1);
-
-for i = indepMarket
-    for j = lag
-        xTrain(i,j) = clPr(end-predTime) - clPr(end-predTime-j);
-    end
-end
-
-%xTrain = clPr(1:end-predTime-lag,:);
-
+yTrain = NaN*lag;
+for i = 1+lag(end)+predTime:length(dates)-predTime
+yTrain(i) = clPr(i,1) - clPr(i-predTime,1);
+    xTrain = (clPr(i-predTime,1) - clPr(i-lag-predTime,1))';
+%xTrain = (clPr(end-predTime,1) - clPr(end-lag-predTime:end-predTime,1))';
 XTrain = [ones(size(xTrain(:,1))) xTrain];
+
 
 % Standardize data
 [xTrain, mu, sigma] = zscore(xTrain);
 
 % Normal regress
 method{1} = 'Regress';
-[b1, yHat(:,1)] = NormalRegress(yTrain, XTrain);
+[b1, yHat(i)] = NormalRegress(yTrain(i), XTrain);
 
 % % Lsq Ridge
 % method{2} = 'Identity Ridge';
 % [b2, yHat(:,2)] = RidgeRegress(yTrain, XTrain);
 
 
-% %% Prediction
-% yVal = clPr(end-predTime+1:end,1);
-% xVal = clPr(end-predTime+1-lag:end-lag,:);
-% 
-% % Standardize data
-% %xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
-% %xVal = (xVal - mu')./sigma';
-% 
-% % Prediction
-% XVal = [ones(size(xVal(:,1))) xVal];
-% yPred(:,1) = XVal*b1;
-% % yPred(:,2) = XVal*b2;
-% 
+%% Prediction
+%yVal(i) = zeros(size(yTrain(1,:)));
+yVal(i) = [clPr(i+predTime,1) - clPr(i,1)];
+xVal = (clPr(i,1) - clPr(i-lag,1))';
 
+% Standardize data
+%xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
+%xVal = (xVal - mu')./sigma';
+
+% Prediction
+XVal = [ones(size(xVal(:,1))) xVal];
+yPred(:,1) = XVal*b1;
+% yPred(:,2) = XVal*b2;
+
+end
+
+% Make it same length as dates
+yTrain = [yTrain zeros(1,predTime)];
 %% Plots
 figure()
 for ip = 1:1
     %p(ip) = subplot(2,1,ip);
     hold on;
-    plot(datesTrain(1+lag:end), [yTrain yHat(:,ip)])
+    plot(dates, [yTrain yHat(:,ip)])
     ylabel('$$$');
     xlabel('Time [Days]');
     title(['Multiple Linear Regression Fit, ' method(ip)]);
@@ -73,6 +64,7 @@ for ip = 1:1
     datetick('x')
     
 end
+
 
 %{
 figure()
