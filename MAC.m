@@ -10,7 +10,7 @@ clPr = closingPrice(:,1);
 %% Dependence
 
 Cov = cov(clPr);
-Corr = corr(clPr);
+Corr = corr(clPr)rain(1+lag:end);
 
 %% Moving Averages
 % Parameters
