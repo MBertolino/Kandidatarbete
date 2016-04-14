@@ -1,9 +1,4 @@
-function [b ,yHat, pred] = NormalRegress(yTrain, xTrain, nPred)
-
-% Choose the nPred best predictors
-[pred] = choosePred(xTrain, yTrain, nPred , 'Normal');
-xTrain = xTrain(:, pred);
-XTrain = [ones(size(xTrain(:,1))) xTrain];
+function [b ,yHat] = NormalRegress(yTrain, XTrain)
 
 % Solve with regress
 b = regress(yTrain,XTrain);

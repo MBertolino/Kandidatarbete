@@ -3,9 +3,8 @@ clear;
 % Load Data
 load('KexJobbData.mat')
 depMarket = 1;                 % Dependent Market
-indepMarket = 2:40;            % Possible independent markets
-nPred = 3;                     % How many predictors    
-predTime = 40;                 % How many days to predict
+indepMarket = 1:40;            % Possible independent markets
+predTime = 20;                 % How many days to predict
 lag = 1;                       % How many days ago we look at the indep markets
 
 
@@ -23,47 +22,43 @@ clPr = closingPrice(indS:indE+predTime, [depMarket indepMarket]);
 
 %% Regression
 yTrain = clPr(1+lag:end-predTime,1);
-xTrain = clPr(1:end-predTime-lag,2:end);
+xTrain = clPr(1:end-predTime-lag,:);
 %yTrain = diff(yTrain);
 %xTrain = diff(xTrain);
+XTrain = [ones(size(xTrain(:,1))) xTrain];
 
 % Standardize data
-xTrain = zscore(xTrain);
+[xTrain, mu, sigma] = zscore(xTrain);
 
 % Normal regress
 method{1} = 'Regress';
-[b1, yHat(:,1), pred1] = NormalRegress(yTrain, xTrain, nPred);
+[b1, yHat(:,1)] = NormalRegress(yTrain, XTrain);
 
 % Lsq Ridge
 method{2} = 'Identity Ridge';
-[b2, yHat(:,2), pred2] = RidgeRegress(yTrain, xTrain, nPred);
-
-% Quadratic solution
-method{3} = 'Generalized Ridge';
-[b3, yHat(:,3), pred3] = GeneralizedRegress(yTrain, xTrain, nPred);
-
+[b2, yHat(:,2)] = RidgeRegress(yTrain, XTrain);
 
 
 %% Prediction
 yVal = clPr(end-predTime+1:end,1);
-xVal = clPr(end-predTime+1-lag:end-lag,pred1);
+xVal = clPr(end-predTime+1-lag:end-lag,:);
 %yVal = diff(yVal);
 %xVal = diff(xVal);
 
 % Standardize data
-xVal = zscore(xVal);
+%xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
+%xVal = (xVal - mu')./sigma';
 
 % Prediction
 XVal = [ones(size(xVal(:,1))) xVal];
 yPred(:,1) = XVal*b1;
 yPred(:,2) = XVal*b2;
-yPred(:,3) = XVal*b3;
 
 
 %% Plots
 figure()
-for ip = 1:3
-    p(ip) = subplot(3,1,ip);
+for ip = 1:2
+    p(ip) = subplot(2,1,ip);
     hold on;
     plot(datesTrain(1+lag:end), [yTrain yHat(:,ip)])
     ylabel('$$$');
@@ -75,8 +70,8 @@ for ip = 1:3
     
 end
 figure()
-for ip = 1:3
-    p2(ip) = subplot(3,1,ip);
+for ip = 1:2
+    p2(ip) = subplot(2,1,ip);
     hold on;
     plot(datesPred(1:end), [yVal yPred(:,ip)])
     ylabel('$$$');

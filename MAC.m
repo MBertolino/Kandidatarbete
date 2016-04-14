@@ -14,8 +14,8 @@ Corr = corr(clPr);
 
 %% Moving Averages
 % Parameters
-long = 200;
-short = 50;
+long = 30;
+short = 20;
 
 % % Normal No Weights (SMA)
 % wLong = ones(1, long)/long;
