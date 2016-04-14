@@ -1,5 +1,13 @@
-1. Ska vi göra en egen crossval-funktion eller använder vi den existerande fel?
+1. Ska vi göra en egen crossval-funktion eller använder vi den existerande fel? Vi får olika optimala lambda nu med cvpartition
+och crossval ger alltid lambda = 0.
 2. Kan vi använda alla 40 tillgångar som prediktorer eller måste vi begränsa oss till ett visst antal?
   (Stanford har inte med alla prediktorer eftersom de inte har tillräckligt med datapunkter, men det har vi)
-3. Får/Ska vi använda Lynx logga på rapporten?
+3. Hur gör vi för att undersöka lag mellan två marknader?
+4. Vi har löst med både lsqr och quadprog - Vilken är bäst? Och varför convergar de inte alltid?
+5. Varför bara MA? Kan vi lägga till poler i filtret och få ARMA?
+6. Idéer på att vidareutveckla MLR? Fler reguljäriseringar? Support Vector Machine?
+7. 
+  
+  
+99. Får/Ska vi använda Lynx logga på rapporten?
 
