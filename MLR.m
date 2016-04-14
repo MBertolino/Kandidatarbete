@@ -12,10 +12,10 @@ lag = 1:2;                       % How many days ago we look at the indep market
 [dates, clPr] = removeNaN(dates, closingPrice);
 
 %% Regression
-yTrain = [0 0];
-for i = 1+lag(end):length(dates)-predTime
-yTrain(i) = clPr(i+predTime,1) - clPr(i,1);
-    xTrain = (clPr(i,1) - clPr(i-lag,1))';
+yTrain = NaN*lag;
+for i = 1+lag(end)+predTime:length(dates)-predTime
+yTrain(i) = clPr(i,1) - clPr(i-predTime,1);
+    xTrain = (clPr(i-predTime,1) - clPr(i-lag-predTime,1))';
 %xTrain = (clPr(end-predTime,1) - clPr(end-lag-predTime:end-predTime,1))';
 XTrain = [ones(size(xTrain(:,1))) xTrain];
 
@@ -32,19 +32,20 @@ method{1} = 'Regress';
 % [b2, yHat(:,2)] = RidgeRegress(yTrain, XTrain);
 
 
-% %% Prediction
-% yVal = clPr(end-predTime+1:end,1);
-% xVal = clPr(end-predTime+1-lag:end-lag,:);
-% 
-% % Standardize data
-% %xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
-% %xVal = (xVal - mu')./sigma';
-% 
-% % Prediction
-% XVal = [ones(size(xVal(:,1))) xVal];
-% yPred(:,1) = XVal*b1;
-% % yPred(:,2) = XVal*b2;
-% 
+%% Prediction
+%yVal(i) = zeros(size(yTrain(1,:)));
+yVal(i) = [clPr(i+predTime,1) - clPr(i,1)];
+xVal = (clPr(i,1) - clPr(i-lag,1))';
+
+% Standardize data
+%xVal = zscore(xVal); % ANVÄNDA GAMLA MU OCH SIGMA
+%xVal = (xVal - mu')./sigma';
+
+% Prediction
+XVal = [ones(size(xVal(:,1))) xVal];
+yPred(:,1) = XVal*b1;
+% yPred(:,2) = XVal*b2;
+
 end
 
 % Make it same length as dates
@@ -54,7 +55,7 @@ figure()
 for ip = 1:1
     %p(ip) = subplot(2,1,ip);
     hold on;
-    plot(dates, [yTrain])% yHat(:,ip)])
+    plot(dates, [yTrain yHat(:,ip)])
     ylabel('$$$');
     xlabel('Time [Days]');
     title(['Multiple Linear Regression Fit, ' method(ip)]);
