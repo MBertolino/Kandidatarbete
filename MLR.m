@@ -17,36 +17,27 @@ lag = 1;                       % How many days ago we look at the indep markets
 % yTrain = zeros(length(lag)+predTime,1);
 % yHat = yTrain;
 % yVal = [yTrain; zeros(predTime,1)];
-% yPred = yVal;
+%yPred = yVal;
 
 
 trend = zeros(size(dates));
 ret = trend;
 
+% Training data
 %for i = 1+lag(end)+predTime:length(dates)-predTime
 for i = 1+lag(end)+predTime:1+lag(end)+predTime+500
     yTrain(i-lag(end)-predTime,:) = clPr(i,depMarket) - clPr(i-predTime,depMarket);
     xTrain(i-lag(end)-predTime,:) = clPr(i-predTime,indepMarket) - clPr(i-lag-predTime,indepMarket);
-    
-    
-    %     %% Prediction
-    yVal(i+predTime) = clPr(i+predTime,depMarket) - clPr(i,depMarket);
-    xVal(i+predTime) = clPr(i,indepMarket) - clPr(i-lag,indepMarket);
-    %
-    %
-    %     % Positioning every predTime'th day
-    %     if ~mod(i,predTime)
-    %         trend(i) = sign(yPred(i+predTime));
-    %     end
-    
-    
 end
 
+% Validation data
+yVal = yTrain(1+predTime:end,:);
+xVal = xTrain(1+predTime:end,:);
 
 % Standardize data and add intercept
 [xTrain, mu, sigma] = zscore(xTrain);
 XTrain = [ones(size(xTrain(:,1))) xTrain];
-xVal = (xVal - mu')./sigma';
+xVal = (xVal - mu')./sigma';        
 XVal = [ones(size(xVal(:,1))) xVal];
 
 % Normal regress
