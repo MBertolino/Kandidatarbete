@@ -3,9 +3,10 @@ clear;
 % Load Data
 load('KexJobbData.mat')
 depMarket = 1;                 % Dependent Market
-indepMarket = 1:40;               % Possible independent markets
-predTime = 1;                  % How many days to predict
-lag = 1;                       % How many days ago we look at the indep markets
+indepMarket = 1:4;               % Possible independent markets
+lag = 1:3;                       % How many days ago we look at the indep markets
+
+predTime = 5;                  % How many days to predict
 
 
 % Use this time period
@@ -24,47 +25,61 @@ trend = zeros(size(dates));
 ret = trend;
 
 % Training data
-for i = 1+lag(end)+predTime:length(dates)-predTime
-%for i = 1+lag(end)+predTime:1+lag(end)+predTime+19
+% for j = 0:5
+    
+
+for i = 1+lag(end)+predTime:1+lag(end)+predTime+4
     yTrain(i-lag(end)-predTime,:) = clPr(i,depMarket) - clPr(i-predTime,depMarket);
-    xTrain(i-lag(end)-predTime,:) = clPr(i-predTime,indepMarket) - clPr(i-lag-predTime,indepMarket);
-end
+    %xTrain(i-lag(end)-predTime,:) = clPr(i-predTime,indepMarket) - clPr(i-lag-predTime,indepMarket);
+xTrain = repmat(clPr(i-predTime,indepMarket),lag(end),1) - clPr(i-lag-predTime,indepMarket);
+xTrain = reshape(xTrain.',1,[]);
 
-% Validation data
-yVal = yTrain(1+predTime:end,:);
-xVal = xTrain(1+predTime:end,:);
-
-% Standardize data and add intercept
-[xTrain, mu, sigma] = zscore(xTrain);
-XTrain = [ones(size(xTrain(:,1))) xTrain];
-[nr,nc] = size(xVal);
-xVal = (xVal - repmat(mu,length(yVal),1));
-xVal = xVal./(sigma'*ones(1,nr))';
-XVal = [ones(size(xVal(:,1))) xVal];
-
-% Normal regress
-method{1} = 'Regress';
-[b1, yHat] = NormalRegress(yTrain, XTrain);
-
-% % Lsq Ridge
-% method{2} = 'Identity Ridge';
-% [b2, yHat2] = RidgeRegress(yTrain, XTrain);
+% xTrain(i-lag(end)-predTime,:) = clPr(1:2,1:3);
+% [r,c] = size(xTrain)
+% B = A([lag lag(end)+1],:) - repmat(A(1,:),r,1)
+% B =reshape(B(2:end,:).',1,[])
 
 
-% Prediction
-yPred = XVal*b1;
-% yPred(:,2) = XVal*b2;
-
-% Calculate profit
-gamma = zeros(size(trend));
-gamma(trend > 0) = 1;
-gamma(trend < 0) = -1;
-ret = yVal.*gamma;
-profit = cumsum(ret);
-
-% % Make it same length as dates
-% yTrain = [yTrain; NaN*ones(predTime,1)];
-% yHat = [yHat; NaN*ones(predTime,1)];
+    
+    % Validation dates
+    yVal = yTrain(1+predTime:end,:);
+    xVal = xTrain(1+predTime:end,:);
+    
+    % Standardize data and add intercept
+    [xTrain, mu, sigma] = zscore(xTrain);
+    XTrain = [ones(size(xTrain(:,1))) xTrain];
+    [nr, nc] = size(xVal);
+    xVal = (xVal - repmat(mu,length(yVal),1));
+    xVal = xVal./(sigma'*ones(1,nr))';
+    XVal = [ones(size(xVal(:,1))) xVal];
+    
+    % Normal regress
+    method{1} = 'Regress';
+    [b1, yHat] = NormalRegress(yTrain, XTrain);
+    
+    % % Lsq Ridge
+    % method{2} = 'Identity Ridge';
+    % [b2, yHat2] = RidgeRegress(yTrain, XTrain);
+    
+    
+    % Prediction
+    yPred = XVal*b1;
+    % yPred(:,2) = XVal*b2;
+    
+    % Calculate profit
+    trend = sign(yPred);
+    gamma = zeros(size(trend));
+    gamma(trend > 0) = 1;
+    gamma(trend < 0) = -1;
+    ret = yVal.*gamma;
+    profit = cumsum(ret);
+    
+    
+    % % Make it same length as dates
+    % yTrain = [yTrain; NaN*ones(predTime,1)];
+    % yHat = [yHat; NaN*ones(predTime,1)];
+    
+% end
 
 %% Plots
 figure()
