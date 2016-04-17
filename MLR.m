@@ -2,12 +2,12 @@ clear;
 
 % Load Data
 load('KexJobbData.mat')
-depMarket = 1;                 % Dependent Market
-indepMarket = 1:40;               % Possible independent markets
+depMarket = 1;                   % Dependent Market
+indepMarket = 1:40;              % Possible independent markets
 lag = 1:3;                       % How many days ago we look at the indep markets
 
-trainTime = 100;
-predTime = 21;                  % How many days to predict
+trainTime = 200;
+predTime = 21;                   % How many days to predict
 
 
 % Use this time period
