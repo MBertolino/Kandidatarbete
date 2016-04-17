@@ -12,11 +12,14 @@ ClPr = closingPrice(:,1:40);
 
 Cov = cov(ClPr);
 Corr = corr(ClPr);
-
 %% Moving Averages
+
 % Parameters
-long = 3;
-short = 2;
+PosChanges = zeros(50,50);
+for long = 5:5:250
+    short = 5;
+    while short<long
+
 
 
 % Normal Weights
@@ -44,6 +47,26 @@ wShort = 1/((short+1)*(short/2)) * flipud((1:short)');
 [row, col] = size(ClPr); % To be able to redo the matrixes later
 trend = avgClS - avgClL;
 gamma = sign(trend); % gamme(i,j) = +/- 1
+
+%Calculating position changes, if long average = short average, the
+%position i kept
+[row2, col2] = find(gamma == 0);
+for i = 1:length(row2)
+    gamma(row2(i),col2(i)) = gamma(row2(i)-1, col2(i));
+end
+
+
+%Transaction costs
+
+%Vector with number of position changes for each asset
+posChangeAsset = sum(abs(diff(gamma))/2);
+
+%Vector with number of position changes for each day
+posChangeDay = sum((abs(diff(gamma))/2)'); 
+
+posChangeTot = sum(posChangeDay);
+
+PosChanges(short/5,long/5) = posChangeTot;
 
 %One day price difference
 deltaP = diff(ClPr); % daily return
@@ -90,6 +113,10 @@ ret = deltaP .*gamma./STDEV;
 profit = cumsum(ret);
 PROFIT = sum(profit');
 PROFIT = PROFIT';
+
+short = short + 5;
+    end
+end
 
 %% Plot 
 % Closing Price and Moving Averages
