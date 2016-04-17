@@ -2,13 +2,14 @@ clear;
 
 % Load Data
 load('KexJobbData.mat')
-depMarket = 1;                   % Dependent Market
+depMarket = 10;                   % Dependent Market
 indepMarket = 1:40;              % Possible independent markets
-lag = 1:3;                       % How many days ago we look at the indep markets
+lag = 1:5;                       % How many days ago we look at the indep markets
 
-trainTime = 200;
-predTime = 21;                   % How many days to predict
 
+trainTime = 300;
+predTime = 10;                   % How many days to predict
+tradePeriods = 200;
 
 % Use this time period
 [dates, clPr] = removeNaN(dates, closingPrice);
@@ -16,10 +17,10 @@ predTime = 21;                   % How many days to predict
 %% Regression
 
 % Sliding window
-for j = 0:100
+for j = 1:tradePeriods
     for i = 1:trainTime
-        yTrain(i,:) = clPr(i+lag(end)+(j+1)*predTime,depMarket) - clPr(i+lag(end)+j*predTime,depMarket);
-        xTemp = repmat(clPr(i+lag(end)+j*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+j*predTime,indepMarket);
+        yTrain(i,:) = clPr(i+lag(end)+j*predTime,depMarket) - clPr(i+lag(end)+(j-1)*predTime,depMarket);
+        xTemp = repmat(clPr(i+lag(end)+(j-1)*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+(j-1)*predTime,indepMarket);
         % xTemp = repmat(clPr(i+lag(end)-predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag-predTime,indepMarket);
         xTrain(i,:) = reshape(xTemp.',1,[]);
     end
@@ -33,26 +34,27 @@ for j = 0:100
     method{1} = 'Regress';
     [b1, yHat] = NormalRegress(yTrain, XTrain);
     
-    % % Lsq Ridge
-    % method{2} = 'Identity Ridge';
-    % [b2, yHat2] = RidgeRegress(yTrain, XTrain);
+    %     % Lsq Ridge
+    %     method{2} = 'Identity Ridge';
+    %     [b2, yHat2] = RidgeRegress(yTrain, XTrain);
     
     %% Prediction
     % Validation
-    yVal(j+1) = clPr(i+lag(end)+(j+1)*predTime,depMarket) - clPr(i+lag(end)+j*predTime,depMarket);
+    yVal(j) = clPr(i+lag(end)+(j+1)*predTime,depMarket) - clPr(i+lag(end)+j*predTime,depMarket);
     xTemp = repmat(clPr(i+lag(end)+j*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+j*predTime,indepMarket);
     xVal = reshape(xTemp.',1,[]);
     [nr, nc] = size(xVal);
-    xVal = (xVal - repmat(mu,length(yVal(j+1)),1));
+    xVal = (xVal - repmat(mu,length(yVal(j)),1));
     xVal = xVal./(sigma'*ones(1,nr))';
     XVal = [ones(size(xVal(:,1))) xVal];
     
     % Prediction
-    yPred(j+1) = XVal*b1;
-    % yPred2 = XVal*b2;
+    yPred(j) = XVal*b1;
+    %yPred2(j) = XVal*b2; yVal]
     
+    % Dates adjustment
+    datez(j) = dates(i+lag(end)+(j+1)*predTime);
 end
-
 
 % Calculate profit
 trend = sign(yPred);
@@ -62,12 +64,23 @@ gamma(trend < 0) = -1;
 ret = yVal.*gamma;
 profit = cumsum(ret);
 
+%% Plots
+
 figure()
-plot(profit)
+plot(datez, profit)
+ylabel('$$$')
+xlabel('Time [days]')
+legend('OMX')
+datetick('x')
+
+figure()
+hold on;
+plot(datez,yPred,'-*')
+hold on;
+plot(datez,yVal)
+datetick('x')
 
 %{
-
-%% Plots
 figure()
 for ip = 1:1
     %p(ip) = subplot(2,1,ip);
