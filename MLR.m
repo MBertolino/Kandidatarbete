@@ -4,16 +4,15 @@ clear;
 load('KexJobbData.mat')
 depMarket = 1;                   % Dependent Market
 indepMarket = 1:40;              % Possible independent markets
-lag = 1:2;                       % How many days ago we look at the indep markets
+lag = 1:3;                       % How many days ago we look at the indep markets
 
 % Use this time period
 [dates, clPr] = removeNaN(dates, closingPrice);
 
-
-trainTime = 126;
-predTime = 2;                   % How many days to predict
+trainTime = 150;
+predTime = 21;                   % How many days to predict
 %tradePeriods = floor(length(dates)/trainTime);
-tradePeriods = 1000;
+tradePeriods = 100;
 
 
 %% Regression
@@ -40,7 +39,13 @@ for j = 1:tradePeriods
     % Lsq Ridge
     method{2} = 'Identity Ridge';
     [b2, yHat2] = RidgeRegress(yTrain, XTrain);
-    
+% [row, col] = size(XTrain);
+% 
+% lambda = 1e-1;
+% ridgeEye = eye(col);
+% [U, D, V] = svd(XTrain);
+% b2 = U*D*inv((D'*D + lambda*eye(col)))*D*U';
+
     %% Prediction
     % Validation
     

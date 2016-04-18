@@ -3,16 +3,24 @@ function [b, yHat] = RidgeRegress(yTrain, XTrain)
 [row, col] = size(XTrain);
 
 % Penalty factor
-lambda = 1e-1;
+lambda = 5e1;
 ridgeEye = eye(col);
-ridgeEye(1,1) = 0;
 
+
+% Solve with lsqr
+% ridgeEye(1,1) = 0;
 % Ridge data
-XRidge = [XTrain; (lambda*ridgeEye)];
-yRidge = [yTrain; zeros(col,1)];
+% XRidge = [XTrain; (lambda*ridgeEye)];
+% yRidge = [yTrain; zeros(col,1)]; 
+% b = lsqr(XRidge,yRidge);
 
-% Solving with lsqr
-b = lsqr(XRidge,yRidge);
+
+% Solve with svd
+[U, D, V] = svd(XTrain);
+H = V*(D'*D + lambda*ridgeEye)*V';
+H = (H+H')/2;
+f = -V*D'*U'*yTrain;
+b = quadprog(H,f);
 
 % Fit to training data
 yHat = XTrain*b;
