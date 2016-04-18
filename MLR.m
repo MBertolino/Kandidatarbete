@@ -4,15 +4,15 @@ clear;
 load('KexJobbData.mat')
 depMarket = 1;                   % Dependent Market
 indepMarket = 1:40;              % Possible independent markets
-lag = 1:3;                       % How many days ago we look at the indep markets
+lag = 1:4;                       % How many days ago we look at the indep markets
 
 % Use this time period
 [dates, clPr] = removeNaN(dates, closingPrice);
 
-trainTime = 150;
+trainTime = 200;
 predTime = 21;                   % How many days to predict
 %tradePeriods = floor(length(dates)/trainTime);
-tradePeriods = 100;
+tradePeriods = 150;
 
 
 %% Regression
