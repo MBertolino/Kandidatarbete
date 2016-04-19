@@ -19,7 +19,13 @@ tradePeriods = 150;
 %% Regression
 
 % Pre-allocating
-yTrain = zeros(size(trainTime-lag(end)-predTime,1);
+yTrain = zeros(trainTime-lag(end)-predTime,1);
+xTrain = zeros(trainTime-lag(end)-predTime, lag(end)*length(indepMarket));
+yVal = zeros(tradePeriods,1);
+yPred1 = yVal;
+yPred2 = yVal;
+datez = yVal;
+b = zeros(lag(end)*length(indepMarket)+1,2);
 
 % Sliding window
 for j = 1:tradePeriods
@@ -38,11 +44,11 @@ for j = 1:tradePeriods
     
     % Normal regress
     method{1} = 'Regress';
-    [b1, yHat] = NormalRegress(yTrain, XTrain);
+    b(:,1) = regress(yTrain,XTrain);
     
     % Lsq Ridge
     method{2} = 'Identity Ridge';
-    [b2, yHat2] = RidgeRegress(yTrain, XTrain);
+    b(:,2) = RidgeRegress(yTrain, XTrain);
     
     
     %% Prediction
@@ -54,9 +60,11 @@ for j = 1:tradePeriods
     xVal = xVal./sigmax;
     XVal = [ones(size(xVal(:,1))) xVal];
     
-    yPred1(j) = XVal*b1; % Regress
-    yPred2(j) = XVal*b2; % Ridge
-    yPred = yPred2;
+    yPred1(j,1) = XVal*b(:,1); % Regress
+    yPred1(j,2) = yPred1(j,1) + sigmay; % + 1 std
+    yPred1(j,3) = yPred1(j,1) - sigmay; % - 1 std
+    yPred2(j) = XVal*b(:,2); % Ridge
+    
     
     % Validation
     yVal(j) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
@@ -67,9 +75,12 @@ for j = 1:tradePeriods
 end
 
 % Calculate profit
+yPred = yPred1;
 gamma = sign(yPred);
-ret = yVal.*gamma;
-profit = cumsum(ret);
+for k = 1:3
+    ret(:,k) = yVal.*gamma(:,k);
+    profit(:,k) = cumsum(ret(:,k));
+end
 
 %% Plots
 
@@ -82,39 +93,8 @@ datetick('x')
 
 figure()
 hold on;
-plot(datez,yPred,'-*')
+plot(datez,yPred)
 hold on;
-plot(datez,yVal)
+% plot(datez,yVal)
+legend('Real data','Prediction', 'Location', 'Northeast');
 datetick('x')
-
-%{
-figure()
-for ip = 1:1
-    %p(ip) = subplot(2,1,ip);
-    hold on;
-    plot(dates(2+lag(end)+predTime:end), [yTrain yHat(:,ip)])
-    ylabel('$$$');
-    xlabel('Time [Days]');
-    title(['Multiple Linear Regression Fit, ' method(ip)]);
-    legend('Real data','Prediction', 'Location', 'Northeast');
-    %linkaxes(p,'x','y');
-    datetick('x')
-    
-end
-
-
-
-figure()
-for ip = 1:1
-    %p2(ip) = subplot(2,1,ip);
-    hold on;
-    plot(dates, [yVal yPred(:,ip)])
-    ylabel('$$$');
-    xlabel('Time [Days]');
-    title(['Multiple Linear Regression Fit, ' method(ip)]);
-    legend('Real data','Prediction', 'Location', 'Northeast');
-    %linkaxes(p2,'x','y');
-    datetick('x')
-end
-
-%}
