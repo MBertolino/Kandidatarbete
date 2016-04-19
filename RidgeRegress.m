@@ -1,4 +1,4 @@
-function [b, yHat] = RidgeRegress(yTrain, XTrain)
+function b = RidgeRegress(yTrain, XTrain)
 
 [row, col] = size(XTrain);
 
@@ -21,8 +21,5 @@ H = V*(D'*D + lambda*ridgeEye)*V';
 H = (H+H')/2;           % Why necessary
 f = -V*D'*U'*yTrain;
 b = quadprog(H,f);
-
-% Fit to training data
-yHat = XTrain*b;
 
 end
