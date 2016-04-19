@@ -18,7 +18,7 @@ ridgeEye = eye(col);
 % Solve with svd
 [U, D, V] = svd(XTrain);
 H = V*(D'*D + lambda*ridgeEye)*V';
-H = (H+H')/2;
+H = (H+H')/2;           % Why necessary
 f = -V*D'*U'*yTrain;
 b = quadprog(H,f);
 

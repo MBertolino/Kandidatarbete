@@ -9,17 +9,12 @@ lag = 1:4;                       % How many days ago we look at the indep market
 % Use this time period
 [dates, clPr] = removeNaN(dates, closingPrice);
 
-trainTime = 400;
+trainTime = 160+21;
 predTime = 21;                   % How many days to predict
 tradePeriods = 150;
 
 
-
-
 %% Regression
-
-% Pre-allocating
-yTrain = zeros(size(trainTime-lag(end)-predTime,1);
 
 % Sliding window
 for j = 1:tradePeriods
@@ -46,20 +41,20 @@ for j = 1:tradePeriods
     
     %% Prediction
     
+    % Validation
+    yVal(j) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
+    
+    
     % Prediction
     xTemp = repmat(clPr(i+lag(end)+(j+1)*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+(j+1)*predTime,indepMarket);
     xVal = reshape(xTemp.',1,[]);
-    xVal = xVal - repmat(mux,length(xVal(j)),1);
+    xVal = (xVal - repmat(mux,length(xVal(j)),1));
     xVal = xVal./sigmax;
     XVal = [ones(size(xVal(:,1))) xVal];
     
     yPred1(j) = XVal*b1; % Regress
     yPred2(j) = XVal*b2; % Ridge
     yPred = yPred2;
-    
-    % Validation
-    yVal(j) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
-    
     
     % Dates adjustment
     datez(j) = dates(i+lag(end)+(j+1)*predTime);
