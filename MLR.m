@@ -29,6 +29,7 @@ for j = 1:tradePeriods
         xTrain(i,:) = reshape(xTemp.',1,[]);
     end
     
+    
     % Standardize data and add intercept
     [xTrain, mux, sigmax] = zscore(xTrain);
     XTrain = [ones(size(xTrain(:,1))) xTrain];
