@@ -11,7 +11,6 @@ lag = 1:4;                       % How many days ago we look at the indep market
 
 trainTime = 200;
 predTime = 21;                   % How many days to predict
-%tradePeriods = floor(length(dates)/trainTime);
 tradePeriods = 150;
 
 
@@ -39,18 +38,10 @@ for j = 1:tradePeriods
     % Lsq Ridge
     method{2} = 'Identity Ridge';
     [b2, yHat2] = RidgeRegress(yTrain, XTrain);
-% [row, col] = size(XTrain);
-% 
-% lambda = 1e-1;
-% ridgeEye = eye(col);
-% [U, D, V] = svd(XTrain);
-% b2 = U*D*inv((D'*D + lambda*eye(col)))*D*U';
-
+    
+    
     %% Prediction
     % Validation
-    
-    % STANDARDISERA yVal
-    
     yVal(j) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
     
     xTemp = repmat(clPr(i+lag(end)+(j+1)*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+(j+1)*predTime,indepMarket);
