@@ -11,12 +11,9 @@ ClPr = closingPrice(:,1:40);
 %% Moving Averages
 
 % Parameters
-PosChanges = zeros(50,50);
-retTot = PosChanges;
 long = 200;
 short = 50;
 stdevDays = 21;
-portfolioWeights = ones(size(ClPr));
 
 
 %% Weights
@@ -63,7 +60,7 @@ end
 %% Transaction costs
 
 %Vector with number of position changes for each day
-posChangeDay = sum((abs(diff(gamma))/2)');
+posChangeDay = sum((abs(diff(gamma))/2),2);
 posChangeTot = sum(posChangeDay);
 
 
@@ -73,57 +70,79 @@ deltaP = diff(ClPr); % daily return
 deltaP = [deltaP;zeros(1,col)];
 
 
-%Standard deviation
-stdev = zeros(length(ClPr)-stdevDays,col);
-%If w use absolute return
+%Standard deviation for returns
+stdev1 = zeros(length(ClPr)-stdevDays,col);
 for i = 1:length(ClPr)-stdevDays
     A = deltaP(i:i+stdevDays-1,:);
-    stdev(i,:) = std(A);
+    stdev1(i,:) = std(A);
     
 end
+stdev1 = [ones(stdevDays,col);stdev1];
 
-stdev = [ones(stdevDays,col);stdev];
+
+%Standard deviation for portfolio weights
+stdev2 = zeros(length(ClPr)-stdevDays,col);
+changeFactor = [ClPr(2:end,:)./ClPr(1:end-1,:);zeros(1,col)];
+for i = 1:length(ClPr)-stdevDays
+    B = changeFactor(i:i+stdevDays-1,:);
+    stdev2(i,:) = std(B);
+end
+stdev2 = [ones(stdevDays,col);stdev2];
+stdev2Sum = sum(stdev2,2);
+
+wPortfolio = repmat(stdev2Sum,1,col)./stdev2;
+wPortfolio = wPortfolio./repmat(sum(wPortfolio,2),1,col);
+
 
 deltaP(1:stdevDays,:) = zeros(stdevDays,col);
-ret = deltaP .*gamma./stdev;
-retSum=sum(ret);
 
-profit = cumsum(ret);
-profitTot = cumsum(retTot);
+%Return with equal portfolio weighting
+ret1 = deltaP .*gamma./stdev1;
+retTot1 = sum(ret1,2)/col;
+profit1 = cumsum(ret1);
+profitTot1 = cumsum(retTot1);
+
+%Return with risk-based portfolio weighting
+ret2 = col*ret1.*wPortfolio;
+retTot2 = sum(ret2,2)/col;
+profit2 = cumsum(ret2);
+profitTot2 = cumsum(retTot2);
 
 
 
-%{
 %% Plot
 
-% Closing Price and Moving Averages
+% Returns without weighting
 figure(1);
-%hold on;
-%plot(dates2,ClPr)
-ClPr2 = deltaP./stdev;
-plot(dates2, [ClPr avgClL avgClS ]);
-legend(['Closing Prices'], ['Moving Average ' num2str(long)], ...
-    ['Moving Average ' num2str(short)], 'location','best');
-ylabel('$$$');
-xlabel('Time [Days]');
-title('Market Closing Prices');
-datetick 'x'
-%hold off;
-
-% Returns
-figure(2);
 a(1) = subplot(2,1,1);
-plot(dates2, profitTot)
+plot(dates2, profitTot1)
 datetick('x')
-ylabel('$$$')
+ylabel('Return')
 xlabel('Time [Days]');
-title('Accumulated Profit')
+title('Accumulated Profit with equal Portfolio Weights')
 
 a(2) = subplot(2,1,2);
-plot(dates2, retTot')
+plot(dates2, retTot1')
 datetick('x')
-ylabel('$$$')
+ylabel('Return')
 xlabel('Time [Days]')
-title('Daily return')
+title('Daily return with equal Portfolio Weights')
+linkaxes([a(1) a(2)],'x');
+
+%Returns with weighting
+figure(2);
+a(1) = subplot(2,1,1);
+plot(dates2, profitTot2)
+datetick('x')
+ylabel('Return')
+xlabel('Time [Days]');
+title('Accumulated Profit with stdev Portfolio Weights')
+
+a(2) = subplot(2,1,2);
+plot(dates2, retTot2')
+datetick('x')
+ylabel('Return')
+xlabel('Time [Days]')
+title('Daily return with stdev Portfolio Weights')
 linkaxes([a(1) a(2)],'x');
 %}
