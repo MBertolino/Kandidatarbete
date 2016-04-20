@@ -5,7 +5,7 @@ load('KexJobbData.mat')
 [dates, clPr] = removeNaN(dates, closingPrice);
 
 % Parameters
-depMarket = 38;
+depMarket = 1;
 indepMarket = 1:40;
 lag = 1:4;                       % How many days ago we look at the indep markets
 
@@ -82,7 +82,6 @@ figure()
 plot(datez, profit)
 ylabel('$$$')
 xlabel('Time [days]')
-legend('OMX')
 datetick('x')
 
 figure()
