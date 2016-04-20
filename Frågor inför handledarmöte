@@ -1,7 +1,7 @@
 Vi har löst med quadprog - Varför convergar den inte alltid?
-Idéer på att vidareutveckla MLR? Fler reguljäriseringsmetoder? Support Vector Machine?
+Varför har vissa tillgångar negativt värde? 10ynote, tbond, brent, rbob, soybeans
 Varför bara MA? Kan vi lägga till poler i filtret och få ARMA?
-Lägga till kostnader för köp - vad tar vi för pris?
+Lägga till kostnader för positionsbyte - vad tar vi för pris?
 Bestämma portföljvikter genom att jämföra standardavvikelser? Vilka standardavvikelser?
   
   
