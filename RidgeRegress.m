@@ -3,7 +3,7 @@ function b = RidgeRegress(yTrain, XTrain)
 [row, col] = size(XTrain);
 
 % Penalty factor
-lambda = 2e2;
+lambda = 1e1;
 ridgeEye = eye(col);
 
 
