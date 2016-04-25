@@ -1,9 +1,8 @@
-function b = RidgeRegress(yTrain, XTrain)
+function b = RidgeRegress(yTrain, XTrain, lambda)
 
 [row, col] = size(XTrain);
 
 % Penalty factor
-lambda = 1e1;
 ridgeEye = eye(col);
 
 % Solve with svd

@@ -5,16 +5,16 @@ load('KexJobbData.mat')
 [dates, clPr] = removeNaN(dates, closingPrice);
 
 % Parameters
-depMarket = 1:4;
-indepMarket = 1:40;
-lag = 1:5;                       % How many days ago we look at the indep markets
+depMarket = 3;
+indepMarket = 1:7;
+lag = 1:30;                       % How many days ago we look at the indep markets
+lambda = 1e2;
 
 trainTime = 300;
 predTime = 21;                   % How many days to predict
 tradePeriods = floor((length(dates) - trainTime - predTime)/predTime)-1;
 
 %% Regression
-
 % Pre-allocating
 yTrain = zeros(trainTime-lag(end)-predTime,length(depMarket));
 xTrain = zeros(trainTime-lag(end)-predTime, lag(end)*length(indepMarket));
@@ -56,7 +56,7 @@ for j = 1:tradePeriods
         
         % Ridge Regression
         method{2} = 'Ridge Regression';
-        b2(:,m) = RidgeRegress(yTrain(:,m), XTrain);
+        b2(:,m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
     end
     
     
@@ -68,7 +68,7 @@ for j = 1:tradePeriods
     XVal = [ones(size(xVal(:,1))) xVal];
     
     %         yPred1(j,:) = XVal*b1;             % Regress
-    yPred2(j,:) = XVal*b2;             % Ridge
+    yPred2(j,:) = XVal*b2;                       % Ridge
     
     % Validation
     yVal(j,:) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
@@ -80,11 +80,10 @@ end
 
 % Calculate profit
 yPred = yPred2;
-gamma = sign(yPred).*repmat(sigmay,tradePeriods,1);
-gamma = gamma./sum(sigmay,2);
-ret = yVal.*gamma;
+gamma = sign(yPred);
+gamma = gamma;
+ret = yVal.*gamma.*repmat(sigmay,tradePeriods,1)./sum(sigmay,2);
 profit = cumsum(ret);
-
 profitTot = sum(profit,2);
 
 %% Plots
