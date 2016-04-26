@@ -5,10 +5,10 @@ load('KexJobbData.mat')
 [dates, clPr] = removeNaN(dates, closingPrice);
 
 % Parameters
-depMarket = 1:6;
-indepMarket = 1:40;
+depMarket = 5;
+indepMarket = 1:20;
 lag = 1:5;                       % How many days ago we look at the indep markets
-lambda = 2e2;
+lambda = 1e2;
 
 trainTime = 300;
 predTime = 21;                   % How many days to predict
