@@ -5,12 +5,12 @@ load('KexJobbData.mat')
 [dates, clPr] = removeNaN(dates, closingPrice);
 
 % Parameters
-depMarket = 1:6;
-indepMarket = 1:40;
-lag = 1:5;                       % How many days ago we look at the indep markets
+depMarket = 35;
+indepMarket = 35:40;
+lag = 1:50;                       % How many days ago we look at the indep markets
 lambda = 2e2;
 
-trainTime = 300;
+trainTime = 800;
 predTime = 21;                   % How many days to predict
 tradePeriods = floor((length(dates) - trainTime - predTime)/predTime)-1;
 
@@ -25,7 +25,6 @@ sigmay = yVal;
 datez = yVal;
 b1 = zeros(lag(end)*length(indepMarket)+1,length(depMarket));
 b2 = b1;
-
 
 % Initial step
 for i = 1:trainTime-predTime-lag(end)
@@ -80,17 +79,16 @@ end
 
 % Calculate profit
 gamma1 = sign(yPred1);
-ret1 = yVal.*gamma1.*repmat(sigmay,tradePeriods,1)./sum(sigmay,2);
+ret1 = yVal.*gamma1;
 profit1 = cumsum(ret1);
 profitTot1 = sum(profit1,2);
 
 gamma2 = sign(yPred2);
-ret2 = yVal.*gamma2.*repmat(sigmay,tradePeriods,1)./sum(sigmay,2);
+ret2 = yVal.*gamma2;
 profit2 = cumsum(ret2);
 profitTot2 = sum(profit2,2);
 
 %% Plots
-
 % Plot accumulated profit for each market
 figure()
 plot(datez(:,1), [profit1 profit2])
