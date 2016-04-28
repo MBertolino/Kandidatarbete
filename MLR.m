@@ -14,7 +14,7 @@ trainTime = 300;
 lambda = 2e2;
 
 % Investment
-bankStart = 10000; 
+bankStart = 10000;
 risk = 1;
 
 % Load Data
@@ -70,7 +70,7 @@ for j = 1:tradePeriods
         
         % Ridge Regression
         method{2} = 'Ridge Regression';
-        b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+       % b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
         %         b(:,Ld + m) = ridge(yTrain(:,m), XTrain, lambda);
     end
     
@@ -95,7 +95,7 @@ end
 % Strategy
 for i = 1:2
     gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
-    ret(:,1+(i-1)*Ld:i*Ld) = yVal.*gamma(:,1+(i-1)*Ld:i*Ld);
+    ret(:,1+(i-1)*Ld:i*Ld) = yVal.*gamma(:,1+(i-1)*Ld:i*Ld)/std(yVal);
     profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
     profitTot(:,i) = sum(profit(:,1+(i-1)*Ld:i*Ld),2);
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
@@ -103,7 +103,7 @@ for i = 1:2
 end
 
 for ii = 2:length(ret)
-    bank(ii) = bank(ii-1)*(1+risk*ret(ii-1,1)/10);
+    bank(ii) = bank(ii-1)*(1+risk*ret(ii-1,1));
 end
 
 
@@ -142,9 +142,10 @@ datetick('x')
 
 % Plot the investment
 figure()
-plot(bank)
+plot(datez,bank)
 ylabel('Profit [$$$]') % ;)
 xlabel('Time [Days]')
 title('Profit using MLR in dollars')
+datetick('x')
 
 toc;
