@@ -10,7 +10,6 @@ ridgeEye = eye(col);
 b = V*((D'*D + lambda*ridgeEye)\D'*U'*yTrain);
 
 
-
 % Solve with lsqr
 % ridgeEye(1,1) = 0;
 % Ridge data

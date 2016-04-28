@@ -1,35 +1,50 @@
 clear;
+tic;
+
+% Assets
+depAsset = 36;
+indepAsset = 36:40;
+Ld = length(depAsset);
+Li = length(indepAsset);
+
+% Prediction Param
+lag = 1:20;                       % How many days ago we look at the indep markets
+predTime = 21;                   % How many days to predict
+trainTime = 300;
+lambda = 2e2;
+
+% Investment
+bankStart = 10000; 
+risk = 1;
 
 % Load Data
 load('KexJobbData.mat')
-[dates, clPr] = removeNaN(dates, closingPrice);
 
-% Parameters
-depMarket = 35;
-indepMarket = 35:40;
-lag = 1:50;                       % How many days ago we look at the indep markets
-lambda = 2e2;
-
-trainTime = 800;
-predTime = 21;                   % How many days to predict
+% Remove NaN's
+% Start at 02-Jan-2009
+% End at 28-Jan-2016
+[dates, clPr] = removeNaN(dates(7447-trainTime-2*predTime+1:end), ...
+    closingPrice(7447-trainTime-2*predTime+1:end,:));
 tradePeriods = floor((length(dates) - trainTime - predTime)/predTime)-1;
 
-%% Regression
 % Pre-allocating
-yTrain = zeros(trainTime-lag(end)-predTime,length(depMarket));
-xTrain = zeros(trainTime-lag(end)-predTime, lag(end)*length(indepMarket));
-yVal = zeros(tradePeriods,length(depMarket));
-yPred1 = yVal;
-yPred2 = yVal;
+yTrain = zeros(trainTime-lag(end)-predTime,Ld);
+xTrain = zeros(trainTime-lag(end)-predTime, lag(end)*Li);
+yVal = zeros(tradePeriods, Ld);
+yPred = zeros(tradePeriods, 2*Ld);
 sigmay = yVal;
 datez = yVal;
-b1 = zeros(lag(end)*length(indepMarket)+1,length(depMarket));
-b2 = b1;
+bank = yVal;
+bank(1) = bankStart;
+b = zeros(lag(end)*Li+1,2*Ld);
+profitTot = zeros(tradePeriods,2);
 
+
+%% Regression
 % Initial step
 for i = 1:trainTime-predTime-lag(end)
-    yTrain(i,:) = clPr(i+lag(end)+2*predTime,depMarket) - clPr(i+lag(end)+1*predTime,depMarket);
-    xTemp = repmat(clPr(i+lag(end)+1*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+1*predTime,indepMarket);
+    yTrain(i,:) = clPr(i+lag(end)+2*predTime,depAsset) - clPr(i+lag(end)+1*predTime,depAsset);
+    xTemp = repmat(clPr(i+lag(end)+1*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+1*predTime,indepAsset);
     xTrain(i,:) = reshape(xTemp.',1,[]);
 end
 
@@ -38,8 +53,8 @@ for j = 1:tradePeriods
     yTrain(1:end-predTime,:) = yTrain(predTime+1:end,:);
     xTrain(1:end-predTime,:) = xTrain(predTime+1:end,:);
     for i = predTime:trainTime-lag(end)
-        yTrain(i,:) = clPr(i+lag(end)+(j+1)*predTime,depMarket) - clPr(i+lag(end)+j*predTime,depMarket);
-        xTemp = repmat(clPr(i+lag(end)+j*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+j*predTime,indepMarket);
+        yTrain(i,:) = clPr(i+lag(end)+(j+1)*predTime,depAsset) - clPr(i+lag(end)+j*predTime,depAsset);
+        xTemp = repmat(clPr(i+lag(end)+j*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+j*predTime,indepAsset);
         xTrain(i,:) = reshape(xTemp.',1,[]);
     end
     
@@ -48,73 +63,88 @@ for j = 1:tradePeriods
     XTrain = [ones(size(xTrain(:,1))) xTrain];
     [yTrain, muy, sigmay] = zscore(yTrain);
     
-    for m = 1:length(depMarket)
+    for m = 1:Ld
         % OLS Regression
         method{1} = 'OLS Regression';
-        b1(:,m) = regress(yTrain(:,m),XTrain);
+        b(:,m) = regress(yTrain(:,m), XTrain);
         
         % Ridge Regression
         method{2} = 'Ridge Regression';
-        b2(:,m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+        b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+        %         b(:,Ld + m) = ridge(yTrain(:,m), XTrain, lambda);
     end
     
     
     %% Prediction & Validation
     % Prediction
-    xTemp = repmat(clPr(i+lag(end)+(j+1)*predTime,indepMarket),lag(end),1) - clPr(i+lag(end)-lag+(j+1)*predTime,indepMarket);
+    xTemp = repmat(clPr(i+lag(end)+(j+1)*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+(j+1)*predTime,indepAsset);
     xVal = reshape(xTemp.',1,[]);
     xVal = (xVal - mux)./sigmax;
     XVal = [ones(size(xVal(:,1))) xVal];
     
-    yPred1(j,:) = XVal*b1;                       % Regress
-    yPred2(j,:) = XVal*b2;                       % Ridge
-    
+    yPred(j,:) = XVal*b;
+
     % Validation
-    yVal(j,:) = clPr(i+lag(end)+(j+2)*predTime,depMarket) - clPr(i+lag(end)+(j+1)*predTime,depMarket);
+    yVal(j,:) = clPr(i+lag(end)+(j+2)*predTime,depAsset) - clPr(i+lag(end)+(j+1)*predTime,depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
     
     % Dates adjustment
     datez(j) = dates(i+lag(end)+(j+1)*predTime);
 end
 
-% Calculate profit
-gamma1 = sign(yPred1);
-ret1 = yVal.*gamma1;
-profit1 = cumsum(ret1);
-profitTot1 = sum(profit1,2);
+% Strategy
+for i = 1:2
+    gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
+    ret(:,1+(i-1)*Ld:i*Ld) = yVal.*gamma(:,1+(i-1)*Ld:i*Ld);
+    profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
+    profitTot(:,i) = sum(profit(:,1+(i-1)*Ld:i*Ld),2);
+    infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
+        * sqrt(250); % Annualized
+end
 
-gamma2 = sign(yPred2);
-ret2 = yVal.*gamma2;
-profit2 = cumsum(ret2);
-profitTot2 = sum(profit2,2);
+for ii = 2:length(ret)
+    bank(ii) = bank(ii-1)*(1+risk*ret(ii-1,1)/10);
+end
+
 
 %% Plots
+
 % Plot accumulated profit for each market
 figure()
-plot(datez(:,1), [profit1 profit2])
+hold on;
+plot(datez(:,1), profit)
 title('Accumulated Profit')
-ylabel('$$$')
+ylabel('Risk-adjusted profit')
 xlabel('Time [years]')
 legend('OLS', 'Ridge')
 datetick('x')
 
 % Plot accumulated total profit
 figure()
-plot(datez(:,1), [profitTot1 profitTot2])
+plot(datez(:,1), profitTot)
 title('Accumulated Total Profit')
-ylabel('$$$')
+ylabel('Risk-adjusted profit')
 xlabel('Time [years]')
 legend('OLS', 'Ridge')
 datetick('x')
 
-% Plot expected returns for each market
+%Plot expected returns for each market
 figure()
 hold on;
 plot(datez(:,1),yVal)
 hold on;
-plot(datez(:,1),[yPred1 yPred2])
+plot(datez(:,1),yPred)
 title('Expected return')
-ylabel('Return')
+ylabel('Risk-adjusted return')
 xlabel('Time [years]')
 legend('Real data','Prediction', 'Location', 'Northeast');
 datetick('x')
+
+% Plot the investment
+figure()
+plot(bank)
+ylabel('Profit [$$$]') % ;)
+xlabel('Time [Days]')
+title('Profit using MLR in dollars')
+
+toc;
