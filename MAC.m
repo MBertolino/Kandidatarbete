@@ -3,6 +3,11 @@
 load('KexJobbData.mat')
 ClPr = closingPrice(:,1:40);
 
+%Positionsbyten, kostnad --> 1/20-dels standardavvikelse.
+
+%Portföljvikt genom std
+%Varför har vissa tillgångar negativt värde? 10ynote, tbond, brent, rbob, soybeans
+
 %% Process data to ajust for NaNs
 
 [dates2, ClPr] = removeNaN(dates, ClPr);
@@ -48,6 +53,7 @@ avgClS = filter(wShort, 1, ClPr);
 %}
 
 
+
 %% Positioning
 [row, col] = size(ClPr); % To be able to redo the matrixes later
 trend = avgClS - avgClL;
@@ -83,7 +89,7 @@ for i = 1:length(ClPr)-stdevDays
 end
 stdev1 = [ones(stdevDays,col);stdev1];
 
-
+%{
 %Standard deviation for portfolio weights
 stdev2 = zeros(length(ClPr)-stdevDays,col);
 changeFactor = [ClPr(2:end,:)./ClPr(1:end-1,:);zeros(1,col)];
@@ -97,6 +103,7 @@ stdev2Sum = sum(stdev2,2);
 wPortfolio = repmat(stdev2Sum,1,col)./stdev2;
 wPortfolio = wPortfolio./repmat(sum(wPortfolio,2),1,col);
 
+%}
 
 deltaP(1:stdevDays,:) = zeros(stdevDays,col);
 
@@ -108,16 +115,21 @@ profitTot1 = cumsum(retTot1);
 infoRet1 = mean(ret1)/std(ret1) ...
         * sqrt(250);
 
+%{
 %Return with risk-based portfolio weighting
 ret2 = col*ret1.*wPortfolio;
 retTot2 = sum(ret2,2)/col;
 profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
+<<<<<<< HEAD
 
 % Investing
 for ii = 2:length(ret)
     bank(ii) = bank(ii-1)*(1+risk*ret(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
 end
+=======
+%}
+>>>>>>> master
 
 
 %% Plot
@@ -129,18 +141,24 @@ plot(dates2, profitTot1)
 datetick('x')
 ylabel('Return')
 xlabel('Time [Days]');
-title('Accumulated Profit with equal Portfolio Weights')
+title('Accumulated Profit')
 
 a(2) = subplot(2,1,2);
 plot(dates2, retTot1')
 datetick('x')
 ylabel('Return')
 xlabel('Time [Days]')
-title('Daily return with equal Portfolio Weights')
+title('Daily return')
 linkaxes([a(1) a(2)],'x');
 
+<<<<<<< HEAD
 % Returns with weighting
 figure();
+=======
+%{
+%Returns with weighting
+figure(2);
+>>>>>>> master
 a(1) = subplot(2,1,1);
 plot(dates2, profitTot2)
 datetick('x')
