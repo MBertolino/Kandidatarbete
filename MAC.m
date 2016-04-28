@@ -15,6 +15,10 @@ long = 200;
 short = 50;
 stdevDays = 21;
 
+% Investment
+risk = 1;
+bank(1) = 10000;
+
 
 %% Weights
 
@@ -64,7 +68,7 @@ posChangeDay = sum((abs(diff(gamma))/2),2);
 posChangeTot = sum(posChangeDay);
 
 
-%% Returns
+% Returns
 %One day price difference
 deltaP = diff(ClPr); % daily return
 deltaP = [deltaP;zeros(1,col)];
@@ -101,6 +105,8 @@ ret1 = deltaP .*gamma./stdev1;
 retTot1 = sum(ret1,2)/col;
 profit1 = cumsum(ret1);
 profitTot1 = cumsum(retTot1);
+infoRet1 = mean(ret1)/std(ret1) ...
+        * sqrt(250);
 
 %Return with risk-based portfolio weighting
 ret2 = col*ret1.*wPortfolio;
@@ -108,12 +114,16 @@ retTot2 = sum(ret2,2)/col;
 profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
 
+% Investing
+for ii = 2:length(ret)
+    bank(ii) = bank(ii-1)*(1+risk*ret(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
+end
 
 
 %% Plot
 
 % Returns without weighting
-figure(1);
+figure();
 a(1) = subplot(2,1,1);
 plot(dates2, profitTot1)
 datetick('x')
@@ -129,8 +139,8 @@ xlabel('Time [Days]')
 title('Daily return with equal Portfolio Weights')
 linkaxes([a(1) a(2)],'x');
 
-%Returns with weighting
-figure(2);
+% Returns with weighting
+figure();
 a(1) = subplot(2,1,1);
 plot(dates2, profitTot2)
 datetick('x')
@@ -145,4 +155,11 @@ ylabel('Return')
 xlabel('Time [Days]')
 title('Daily return with stdev Portfolio Weights')
 linkaxes([a(1) a(2)],'x');
+
+% Plot the investment
+figure()
+plot(bank)
+ylabel('Profit [$$$]') % ;)
+xlabel('Time [Days]')
+title('Profit using MAC in dollars')
 %}
