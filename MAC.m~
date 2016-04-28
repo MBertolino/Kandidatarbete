@@ -1,5 +1,4 @@
-clear;
-
+%clear
 % Load Data
 load('KexJobbData.mat')
 ClPr = closingPrice(:,1:40);
@@ -10,10 +9,12 @@ ClPr = closingPrice(:,1:40);
 %Varför har vissa tillgångar negativt värde? 10ynote, tbond, brent, rbob, soybeans
 
 %% Process data to ajust for NaNs
+
 [dates2, ClPr] = removeNaN(dates, ClPr);
 
 
 %% Moving Averages
+
 % Parameters
 long = 200;
 short = 50;
@@ -25,6 +26,7 @@ bank(1) = 10000;
 
 
 %% Weights
+
 % Normal Weights
 % wLong = ones(1, long)/long;
 % wShort = ones(1, short)/short;
@@ -43,11 +45,10 @@ wLong = 1/((long+1)*(long/2)) * flipud((1:long)');
 wShort = 1/((short+1)*(short/2)) * flipud((1:short)');
 
 avgClL = filter(wLong, 1, ClPr);
-avgClS = filter(wShort, 1, ClPr);
+avgClS = filter
+(wShort, 1, ClPr);
 %}
 
-avgClL = filter(wLong, 1, ClPr);
-avgClS = filter(wShort, 1, ClPr);
 
 
 %% Positioning
@@ -64,24 +65,28 @@ end
 
 
 %% Transaction costs
+
 %Vector with number of position changes for each day
 posChangeDay = sum((abs(diff(gamma))/2),2);
 posChangeTot = sum(posChangeDay);
+
 
 % Returns
 %One day price difference
 deltaP = diff(ClPr); % daily return
 deltaP = [deltaP;zeros(1,col)];
 
+
 %Standard deviation for returns
 stdev1 = zeros(length(ClPr)-stdevDays,col);
 for i = 1:length(ClPr)-stdevDays
     A = deltaP(i:i+stdevDays-1,:);
     stdev1(i,:) = std(A);
+    
 end
 stdev1 = [ones(stdevDays,col);stdev1];
 
-
+%{
 %Standard deviation for portfolio weights
 stdev2 = zeros(length(ClPr)-stdevDays,col);
 changeFactor = [ClPr(2:end,:)./ClPr(1:end-1,:);zeros(1,col)];
@@ -107,19 +112,25 @@ profitTot1 = cumsum(retTot1);
 infoRet1 = mean(ret1)/std(ret1) ...
         * sqrt(250);
 
+%{
 %Return with risk-based portfolio weighting
 ret2 = col*ret1.*wPortfolio;
 retTot2 = sum(ret2,2)/col;
 profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
+<<<<<<< HEAD
 
 % Investing
 for ii = 2:length(ret)
     bank(ii) = bank(ii-1)*(1+risk*ret(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
 end
+=======
+%}
+>>>>>>> master
 
 
 %% Plot
+
 % Returns without weighting
 figure();
 a(1) = subplot(2,1,1);
@@ -137,9 +148,14 @@ xlabel('Time [Days]')
 title('Daily return')
 linkaxes([a(1) a(2)],'x');
 
-
+<<<<<<< HEAD
 % Returns with weighting
-figure()
+figure();
+=======
+%{
+%Returns with weighting
+figure(2);
+>>>>>>> master
 a(1) = subplot(2,1,1);
 plot(dates2, profitTot2)
 datetick('x')

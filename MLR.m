@@ -70,7 +70,7 @@ for j = 1:tradePeriods
         
         % Ridge Regression
         method{2} = 'Ridge Regression';
-       % b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+        b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
         %         b(:,Ld + m) = ridge(yTrain(:,m), XTrain, lambda);
     end
     
@@ -83,7 +83,7 @@ for j = 1:tradePeriods
     XVal = [ones(size(xVal(:,1))) xVal];
     
     yPred(j,:) = XVal*b;
-
+    
     % Validation
     yVal(j,:) = clPr(i+lag(end)+(j+2)*predTime,depAsset) - clPr(i+lag(end)+(j+1)*predTime,depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
