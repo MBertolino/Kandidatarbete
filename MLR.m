@@ -23,39 +23,43 @@ load('KexJobbData.mat')
 % Remove NaN's
 % Start at 02-Jan-2009
 % End at 28-Jan-2016
-[dates, clPr] = removeNaN(dates(7447-trainTime-2*predTime+1:end), ...
-    closingPrice(7447-trainTime-2*predTime+1:end,:));
-tradePeriods = floor((length(dates) - trainTime - predTime)/predTime)-1;
+[dates, clPr] = removeNaN(dates(7447 - trainTime - 2*predTime + 1:end), ...
+    closingPrice(7447 - trainTime - 2*predTime + 1:end, :));
+tradePeriods = floor((length(dates) - trainTime - predTime)/predTime) - 1;
 
 % Pre-allocating
-yTrain = zeros(trainTime-lag(end)-predTime,Ld);
-xTrain = zeros(trainTime-lag(end)-predTime, lag(end)*Li);
+yTrain = zeros(trainTime - lag(end) - predTime, Ld);
+xTrain = zeros(trainTime - lag(end) - predTime, lag(end)*Li);
 yVal = zeros(tradePeriods, Ld);
 yPred = zeros(tradePeriods, 2*Ld);
 sigmay = yVal;
 datez = yVal;
 bank = yVal;
 bank(1) = bankStart;
-b = zeros(lag(end)*Li+1,2*Ld);
-profitTot = zeros(tradePeriods,2);
+b = zeros(lag(end)*Li + 1, 2*Ld);
+profitTot = zeros(tradePeriods, 2);
 
 
 %% Regression
 % Initial step
-for i = 1:trainTime-predTime-lag(end)
-    yTrain(i,:) = clPr(i+lag(end)+2*predTime,depAsset) - clPr(i+lag(end)+1*predTime,depAsset);
-    xTemp = repmat(clPr(i+lag(end)+1*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+1*predTime,indepAsset);
-    xTrain(i,:) = reshape(xTemp.',1,[]);
+for i = 1:trainTime - predTime - lag(end)
+    yTrain(i,:) = clPr(i + lag(end) + 2*predTime, depAsset) ...
+        - clPr(i + lag(end) + 1*predTime, depAsset);
+    xTemp = repmat(clPr(i + lag(end) + 1*predTime, indepAsset), lag(end),1) ...
+        - clPr(i + lag(end) - lag + 1*predTime, indepAsset);
+    xTrain(i,:) = reshape(xTemp.', 1, []);
 end
 
 % Sliding window
 for j = 1:tradePeriods
-    yTrain(1:end-predTime,:) = yTrain(predTime+1:end,:);
-    xTrain(1:end-predTime,:) = xTrain(predTime+1:end,:);
-    for i = predTime:trainTime-lag(end)
-        yTrain(i,:) = clPr(i+lag(end)+(j+1)*predTime,depAsset) - clPr(i+lag(end)+j*predTime,depAsset);
-        xTemp = repmat(clPr(i+lag(end)+j*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+j*predTime,indepAsset);
-        xTrain(i,:) = reshape(xTemp.',1,[]);
+    yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
+    xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
+    for i = predTime:trainTime - lag(end)
+        yTrain(i,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
+            - clPr(i + lag(end) + j*predTime, depAsset);
+        xTemp = repmat(clPr(i + lag(end) + j*predTime, indepAsset),lag(end),1) ...
+            - clPr(i + lag(end) - lag + j*predTime, indepAsset);
+        xTrain(i,:) = reshape(xTemp.', 1, []);
     end
     
     % Standardize data and add intercept
@@ -71,25 +75,26 @@ for j = 1:tradePeriods
         % Ridge Regression
         method{2} = 'Ridge Regression';
         b(:,Ld + m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
-        %         b(:,Ld + m) = ridge(yTrain(:,m), XTrain, lambda);
     end
     
     
     %% Prediction & Validation
     % Prediction
-    xTemp = repmat(clPr(i+lag(end)+(j+1)*predTime,indepAsset),lag(end),1) - clPr(i+lag(end)-lag+(j+1)*predTime,indepAsset);
-    xVal = reshape(xTemp.',1,[]);
+    xTemp = repmat(clPr(i + lag(end) + (j+1)*predTime, indepAsset), lag(end),1) ...
+        - clPr(i + lag(end) - lag + (j+1)*predTime, indepAsset);
+    xVal = reshape(xTemp.', 1, []);
     xVal = (xVal - mux)./sigmax;
     XVal = [ones(size(xVal(:,1))) xVal];
     
     yPred(j,:) = XVal*b;
     
     % Validation
-    yVal(j,:) = clPr(i+lag(end)+(j+2)*predTime,depAsset) - clPr(i+lag(end)+(j+1)*predTime,depAsset);
+    yVal(j,:) = clPr(i+lag(end) + (j+2)*predTime, depAsset) ...
+        - clPr(i + lag(end) + (j+1)*predTime, depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
     
     % Dates adjustment
-    datez(j) = dates(i+lag(end)+(j+1)*predTime);
+    datez(j) = dates(i + lag(end) + (j+1)*predTime);
 end
 
 % Strategy
@@ -103,7 +108,7 @@ for i = 1:2
 end
 
 for ii = 2:length(ret)
-    bank(ii) = bank(ii-1)*(1+risk*ret(ii-1,1));
+    bank(ii) = bank(ii-1)*(1 + risk*ret(ii-1,1));
 end
 
 
