@@ -2,7 +2,7 @@ clear;
 tic;
 
 % Assets
-depAsset = 36:37;
+depAsset = 36:40;
 indepAsset = 36:40;
 Ld = length(depAsset);
 Li = length(indepAsset);
@@ -26,6 +26,7 @@ load('KexJobbData.mat')
 [dates, clPr] = removeNaN(dates(7447 - trainTime - 2*predTime + 1:end), ...
     closingPrice(7447 - trainTime - 2*predTime + 1:end, :));
 tradePeriods = floor((length(dates) - trainTime - predTime)/predTime) - 1;
+diffClPr = diff(clPr);
 
 % Pre-allocating
 yTrain = zeros(trainTime - lag(end) - predTime, Ld);
@@ -36,17 +37,21 @@ sigmay = yVal;
 b = zeros(lag(end)*Li + 1, 2*Ld);
 profitTot = zeros(tradePeriods, 2);
 profit = zeros(tradePeriods, 2*Ld);
-datez = yVal;
+datez = profitTot;
 profit(1,:) = bankStart;
 
 
 %% Regression
 % Initial step
 for i = 1:trainTime - predTime - lag(end)
-    yTrain(i,:) = clPr(i + lag(end) + 2*predTime, depAsset) ...
-        - clPr(i + lag(end) + 1*predTime, depAsset);
-    xTemp = repmat(clPr(i + lag(end) + 1*predTime, indepAsset), lag(end),1) ...
-        - clPr(i + lag(end) - lag + 1*predTime, indepAsset);
+    %     yTrain(i,:) = clPr(i + lag(end) + 2*predTime, depAsset) ...
+    %         - clPr(i + lag(end) + 1*predTime, depAsset);
+    %     xTemp = repmat(clPr(i + lag(end) + 1*predTime, indepAsset), lag(end),1) ...
+    %         - clPr(i + lag(end) - lag + 1*predTime, indepAsset);
+    %     xTrain(i,:) = reshape(xTemp.', 1, []);
+    yTrain(i,:) = clPr(i + lag(end) + predTime, depAsset) ...
+        - clPr(i + lag(end), depAsset);
+    xTemp = diffClPr(i + lag, indepAsset)';
     xTrain(i,:) = reshape(xTemp.', 1, []);
 end
 
@@ -55,12 +60,15 @@ for j = 1:tradePeriods
     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
     for i = predTime:trainTime - lag(end)
-        yTrain(i,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
-            - clPr(i + lag(end) + j*predTime, depAsset);
-        xTemp = repmat(clPr(i + lag(end) + j*predTime, indepAsset),lag(end),1) ...
-            - clPr(i + lag(end) - lag + j*predTime, indepAsset);
+        %         yTrain(i,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
+        %             - clPr(i + lag(end) + j*predTime, depAsset);
+        %         xTemp = repmat(clPr(i + lag(end) + j*predTime, indepAsset),lag(end),1) ...
+        %             - clPr(i + lag(end) - lag + j*predTime, indepAsset);
+        %         xTrain(i,:) = reshape(xTemp.', 1, []);
+        yTrain(i,:) = clPr(i + lag(end) + j*predTime, depAsset) ...
+            - clPr(i + lag(end) + (j-1)*predTime, depAsset);
+        xTemp = diffClPr(i + lag, indepAsset)';
         xTrain(i,:) = reshape(xTemp.', 1, []);
-        
     end
     
     % Standardize data and add intercept
@@ -81,16 +89,18 @@ for j = 1:tradePeriods
     
     %% Prediction & Validation
     % Prediction
-    xTemp = repmat(clPr(i + lag(end) + (j+1)*predTime, indepAsset), lag(end),1) ...
-        - clPr(i + lag(end) - lag + (j+1)*predTime, indepAsset);
+    %     xTemp = repmat(clPr(i + lag(end) + (j+1)*predTime, indepAsset), lag(end),1) ...
+    %         - clPr(i + lag(end) - lag + (j+1)*predTime, indepAsset);
+    %     xVal = reshape(xTemp.', 1, []);
+    xTemp = diffClPr(i + lag + j*predTime, indepAsset)';
     xVal = reshape(xTemp.', 1, []);
     xVal = (xVal - mux)./sigmax;
     XVal = [ones(size(xVal(:,1))) xVal];
     yPred(j,:) = XVal*b;
     
     % Validation
-    yVal(j,:) = clPr(i + lag(end) + (j+2)*predTime, depAsset) ...
-        - clPr(i + lag(end) + (j+1)*predTime, depAsset);
+    yVal(j,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
+        - clPr(i + lag(end) + j*predTime, depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
     
     % Dates adjustment
@@ -102,8 +112,8 @@ end
 for i = 1:2
     gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
     ret(:,1+(i-1)*Ld:i*Ld) = bsxfun (@rdivide, yVal.*gamma(:,1+(i-1)*Ld:i*Ld), std(yVal));
-%     profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
-%     profitTot(:,i) = sum(profit(:,1+(i-1)*Ld:i*Ld),2);
+    %     profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
+    %     profitTot(:,i) = sum(profit(:,1+(i-1)*Ld:i*Ld),2);
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
         * sqrt(250); % Annualized
 end
@@ -149,7 +159,7 @@ profitTot(:,2) = sum(profit(:, Ld+1:2*Ld), 2)/Ld;
 
 % Plot the investment
 figure()
-plot(datez,profitTot)
+plot(datez, profitTot)
 ylabel('Profit [$$$]') % ;)
 xlabel('Time [Days]')
 title('Profit using MLR in dollars')
