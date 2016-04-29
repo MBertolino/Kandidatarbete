@@ -20,7 +20,7 @@ short = 50;
 stdevDays = 21;
 
 % Investment
-risk = 1;
+risk = 0.05;
 bank(1) = 10000;
 
 
@@ -46,6 +46,7 @@ avgClL = filter(wLong, 1, ClPr);
 avgClS = filter(wShort, 1, ClPr);
 %}
 
+% Create Filter
 avgClL = filter(wLong, 1, ClPr);
 avgClS = filter(wShort, 1, ClPr);
 
@@ -114,8 +115,8 @@ profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
 
 % Investing
-for ii = 2:length(ret)
-    bank(ii) = bank(ii-1)*(1+risk*ret(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
+for ii = 2:length(ret2)
+    bank(ii) = bank(ii-1)*(1+risk*ret2(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
 end
 
 
