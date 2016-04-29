@@ -21,7 +21,7 @@ stdevDays = 21;
 
 % Investment
 risk = 0.05;
-bank(1) = 10000;
+profit(1) = 10000;
 
 
 %% Weights
@@ -115,10 +115,10 @@ profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
 
 % Investing
-for ii = 2:length(ret2)
-    bank(ii) = bank(ii-1)*(1+risk*ret2(ii,1)); % Om vi delar ret med 10 så får vi rimliga siffror!
-end
-
+% for ii = 2:length(ret2)
+%     profit(ii,:) = profit(ii-1)*(1+risk*ret2(ii,:)); % Om vi delar ret med 10 så får vi rimliga siffror!
+% end
+% % profitTot = sum(p
 
 %% Plot
 % Returns without weighting
@@ -158,7 +158,7 @@ linkaxes([a(1) a(2)],'x');
 
 % Plot the investment
 figure()
-plot(bank)
+plot(profit)
 ylabel('Profit [$$$]') % ;)
 xlabel('Time [Days]')
 title('Profit using MAC in dollars')
