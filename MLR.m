@@ -35,9 +35,9 @@ yPred = zeros(tradePeriods, 2*Ld);
 sigmay = yVal;
 b = zeros(lag(end)*Li + 1, 2*Ld);
 profitTot = zeros(tradePeriods, 2);
-bank = zeros(tradePeriods, 2*Ld);
-datez = bank;
-bank(1,:) = bankStart;
+profit = zeros(tradePeriods, 2*Ld);
+datez = yVal;
+profit(1,:) = bankStart;
 
 
 %% Regression
@@ -102,15 +102,17 @@ end
 for i = 1:2
     gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
     ret(:,1+(i-1)*Ld:i*Ld) = bsxfun (@rdivide, yVal.*gamma(:,1+(i-1)*Ld:i*Ld), std(yVal));
-    profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
+%     profit(:,1+(i-1)*Ld:i*Ld) = cumsum(ret(:,1+(i-1)*Ld:i*Ld));
 %     profitTot(:,i) = sum(profit(:,1+(i-1)*Ld:i*Ld),2);
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
         * sqrt(250); % Annualized
 end
 
 for ii = 2:length(ret)
-    bank(ii,:) = bank(ii-1,:).*(1 + risk*ret(ii-1,:));
+    profit(ii,:) = profit(ii-1,:).*(1 + risk*ret(ii-1,:));
 end
+profitTot(:,1) = sum(profit(:, 1:Ld),2)/Ld;
+profitTot(:,2) = sum(profit(:, Ld+1:2*Ld), 2)/Ld;
 
 
 %% Plots
@@ -147,10 +149,12 @@ end
 
 % Plot the investment
 figure()
-plot(datez,bank)
+plot(datez,profitTot)
 ylabel('Profit [$$$]') % ;)
 xlabel('Time [Days]')
 title('Profit using MLR in dollars')
+legend('OLS',['Ridge, lambda = ' num2str(lambda)])
+
 datetick('x')
 
 toc;
