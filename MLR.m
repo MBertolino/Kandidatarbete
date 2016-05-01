@@ -14,20 +14,20 @@ tic;
 load('KexJobbData.mat')
 
 % Assets
-depAsset = 36;
-indepAsset = 36;
+depAsset = 36:40;
+indepAsset = 36:40;
 Ld = length(depAsset);
 Li = length(indepAsset);
 
 % Prediction Param
-lag = 1:20;                       % How many days ago we look at the indep markets
+lag = 1:21;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
 trainTime = 300;
-lambda = 2e2;
+lambda = 2e8;
 
 % Investment Param
 bankStart = 10000;
-risk = 0.05;
+risk = 0.5;
 
 % Remove NaN's
 % Start at 02-Jan-2009
@@ -84,7 +84,8 @@ for j = 1:tradePeriods
         
         % Ridge Regression
         method{2} = 'Ridge Regression';
-        b(:,Ld+m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+%         b(:,Ld+m) = RidgeRegress(yTrain(:,m), XTrain, lambda);
+        b(:,Ld+m) = ridge(yTrain(:,m), XTrain, lambda);
     end
     
     
