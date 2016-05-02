@@ -10,6 +10,8 @@ x - Assumed independent assets used to make a prediction
 %}
 tic;
 
+
+%% Setup
 % Load Data
 load('KexJobbData.mat')
 
@@ -23,9 +25,8 @@ Li = length(indepAsset);
 lag = 1:21;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
 trainTime = 400;
-% lambda = [1e2 1e3]; % [1e2 1e3 1e4];
-lambda = [1e2 1e3 1e4];
-lambdaLength = length(lambda);
+lambda = [0 1e2 1e3 1e4];
+Ll = length(lambda);
 
 % Investment Param
 bankStart = 10000;
@@ -43,11 +44,10 @@ diffClPr = diff(clPr);
 yTrain = zeros(trainTime - lag(end) - predTime, Ld);
 xTrain = zeros(trainTime - lag(end) - predTime, lag(end)*Li);
 yVal = zeros(tradePeriods, Ld);
-yPred = zeros(tradePeriods, (1 + lambdaLength)*Ld);
+yPred = zeros(tradePeriods, (Ll)*Ld);
 sigmay = yVal;
-% b = zeros(lag(end)*Li + 1, lambdaLength*Ld + 1);
-holdingTot = zeros(tradePeriods, lambdaLength+1);
-holding = zeros(tradePeriods, (1 + lambdaLength)*Ld);
+holdingTot = zeros(tradePeriods, Ll);
+holding = zeros(tradePeriods, (Ll)*Ld);
 datez = holdingTot;
 holding(1,:) = bankStart;
 
@@ -79,19 +79,9 @@ for j = 1:tradePeriods
     
     % For every invested market, calculate the regression coefficients
     % using both OLS and Ridge
-    for m = 1:Ld
-        % OLS Regressionfigure()
-        method{1} = 'OLS Regression';
-        b(:,m) = regress(yTrain(:,m), XTrain);
-    end
-    
-    % Ridge Regression
-    method{2} = 'Ridge Regression';
-    b(:,Ld+1:(1 + lambdaLength)*Ld) = RidgeRegress(yTrain, XTrain, lambda);
-    %         b(:,Ld+m) = ridge(yTrain(:,m), XTrain, lambda);
-    %     end
-    
-    
+    b(:,1:(Ll)*Ld) = ridgeRegress(yTrain, XTrain, lambda);
+
+     
     %% Prediction & Validation
     % Prediction
     xTemp = diffClPr(i + lag + j*predTime, indepAsset)';
@@ -111,7 +101,7 @@ end
 
 
 %% Strategy
-for i = 1:1 + lambdaLength
+for i = 1:Ll
     gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
     ret(:,1+(i-1)*Ld:i*Ld) = bsxfun (@rdivide, yVal.*gamma(:,1+(i-1)*Ld:i*Ld), std(yVal));
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
@@ -123,9 +113,8 @@ for ii = 2:length(ret)
     holding(ii,:) = holding(ii - 1, :).*(1 + risk*ret(ii - 1, :));
 end
 
-for il = 1:1 + lambdaLength
-    holdingTot(:,il) = sum(holding(:, (il-1)*Ld + 1: ...
-        il*Ld), 2)/Ld;
+for il = 1:Ll
+    holdingTot(:,il) = sum(holding(:, (il-1)*Ld + 1: il*Ld), 2)/Ld;
 end
 
 %% Plots
@@ -166,7 +155,8 @@ plot(datez, holdingTot)
 ylabel('Holding [$]') % ;)
 xlabel('Time [Days]')
 title('Holding using MLR on equities')
-% legend('OLS',['Ridge, lambda = ' num2str(lambda(il)])
+str = cellstr(num2str((lambda)', 'lambda = %d'));
+legend(str);
 datetick('x')
 
 hold off;
