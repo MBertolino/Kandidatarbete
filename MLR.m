@@ -44,10 +44,10 @@ diffClPr = diff(clPr);
 yTrain = zeros(trainTime - lag(end) - predTime, Ld);
 xTrain = zeros(trainTime - lag(end) - predTime, lag(end)*Li);
 yVal = zeros(tradePeriods, Ld);
-yPred = zeros(tradePeriods, (Ll)*Ld);
+yPred = zeros(tradePeriods, Ll*Ld);
 sigmay = yVal;
 holdingTot = zeros(tradePeriods, Ll);
-holding = zeros(tradePeriods, (Ll)*Ld);
+holding = zeros(tradePeriods, Ll*Ld);
 datez = holdingTot;
 holding(1,:) = bankStart;
 
@@ -79,7 +79,7 @@ for j = 1:tradePeriods
     
     % For every invested market, calculate the regression coefficients
     % using both OLS and Ridge
-    b(:,1:(Ll)*Ld) = ridgeRegress(yTrain, XTrain, lambda);
+    b(:,1:Ll*Ld) = RidgeRegress(yTrain, XTrain, lambda);
 
      
     %% Prediction & Validation
@@ -155,8 +155,8 @@ plot(datez, holdingTot)
 ylabel('Holding [$]') % ;)
 xlabel('Time [Days]')
 title('Holding using MLR on equities')
-str = cellstr(num2str((lambda)', 'lambda = %d'));
-legend(str);
+str = cellstr(num2str(lambda', 'lambda = %d'));
+legend(str, 'Location', 'NorthWest');
 datetick('x')
 
 hold off;
