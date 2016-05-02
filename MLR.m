@@ -23,11 +23,11 @@ Li = length(indepAsset);
 lag = 1:21;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
 trainTime = 300;
-lambda = 2e8;
+lambda = 2e2;
 
 % Investment Param
 bankStart = 10000;
-risk = 0.5;
+risk = 0.05;
 
 % Remove NaN's
 % Start at 02-Jan-2009
@@ -146,9 +146,9 @@ profitTot(:,2) = sum(profit(:, Ld+1:2*Ld), 2)/Ld;
 % %Plot expected returns for each market
 % figure()
 % hold on;
-% plot(datez(:,1),yVal)
+% plot(datez(:,1), yVal)
 % hold on;
-% plot(datez(:,1),yPred)
+% plot(datez(:,1), yPred)
 % title('Expected return')
 % ylabel('Risk-adjusted return')
 % xlabel('Time [years]')
