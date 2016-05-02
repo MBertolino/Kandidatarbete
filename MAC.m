@@ -21,7 +21,8 @@ stdevDays = 21;
 
 % Investment
 risk = 0.05;
-profit(1) = 10000;
+profit = zeros(length(dates2), 40);
+profit(1,:) = 10000;
 
 
 %% Weights
@@ -105,20 +106,20 @@ ret1 = deltaP .*gamma./stdev1;
 retTot1 = sum(ret1,2)/col;
 profit1 = cumsum(ret1);
 profitTot1 = cumsum(retTot1);
-infoRet1 = mean(ret1)/std(ret1) ...
-        * sqrt(250);
+infoRet1 = mean(ret1)/std(ret1)* sqrt(250);
 
 %Return with risk-based portfolio weighting
 ret2 = col*ret1.*wPortfolio;
 retTot2 = sum(ret2,2)/col;
 profit2 = cumsum(ret2);
 profitTot2 = cumsum(retTot2);
+infoRet2 = mean(ret2)/std(ret2)* sqrt(250);
 
 % Investing
-% for ii = 2:length(ret2)
-%     profit(ii,:) = profit(ii-1)*(1+risk*ret2(ii,:)); % Om vi delar ret med 10 så får vi rimliga siffror!
-% end
-% % profitTot = sum(p
+for ii = 2:length(ret2)
+    profit(ii,:) = profit(ii-1,:).*(1+risk*ret2(ii,:)); % Om vi delar ret med 10 så får vi rimliga siffror!
+end
+profit = sum(profit,2);
 
 %% Plot
 % Returns without weighting
