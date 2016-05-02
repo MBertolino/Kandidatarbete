@@ -16,8 +16,9 @@ tic;
 load('KexJobbData.mat')
 
 % Assets
-depAsset = 36:40; % 1:13 14:22 23:35 36:40
-indepAsset = 36:40;
+names = assetClassNames(4);
+depAsset = find(assetClass == 4); % 1:13 14:22 23:35 36:40
+indepAsset = depAsset;
 Ld = length(depAsset);
 Li = length(indepAsset);
 
@@ -150,11 +151,11 @@ end
 % datetick('x')
 
 % Plot the investment
-hold on;
+figure()
 plot(datez, holdingTot)
 ylabel('Holding [$]') % ;)
 xlabel('Time [Days]')
-title('Holding using MLR on equities')
+title(['Holding using MLR on ' names])
 str = cellstr(num2str(lambda', 'lambda = %d'));
 legend(str, 'Location', 'NorthWest');
 datetick('x')
