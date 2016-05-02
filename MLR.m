@@ -47,14 +47,19 @@ xTrain = zeros(trainTime - lag(end) - predTime, lag(end)*Li);
 yVal = zeros(tradePeriods, Ld);
 yPred = zeros(tradePeriods, Ll*Ld);
 sigmay = yVal;
-holdingTot = zeros(tradePeriods, Ll);
 holding = zeros(tradePeriods, Ll*Ld);
+holdingTot = zeros(tradePeriods, Ll);
 datez = holdingTot;
 holding(1,:) = bankStart;
 
 
 %% Regression
 % Initial step
+% Data relating assets to be predicted, y, and assets to use as
+% predictors, x. For each day in a tradePeriods sized window y and x are
+% related.
+% yTrain - is the training set of the to-be-predicted y
+% xTrain - is the training set of the predictors x
 for i = 1:trainTime - predTime - lag(end)
     yTrain(i,:) = clPr(i + lag(end) + predTime, depAsset) ...
         - clPr(i + lag(end), depAsset);
@@ -63,6 +68,8 @@ for i = 1:trainTime - predTime - lag(end)
 end
 
 % Sliding window
+% After a prediction the training window is moved so only the latest data
+% points are used as training data as they are assumed to be more accurate
 for j = 1:tradePeriods
     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
@@ -78,13 +85,15 @@ for j = 1:tradePeriods
     [xTrain, mux, sigmax] = zscore(xTrain);
     XTrain = [ones(size(xTrain(:,1))) xTrain];
     
-    % For every invested market, calculate the regression coefficients
+    % For every invested asset, calculate the regression coefficients
     % using both OLS and Ridge
     b(:,1:Ll*Ld) = RidgeRegress(yTrain, XTrain, lambda);
-
-     
+    
+    
     %% Prediction & Validation
-    % Prediction
+    % Prediction of the change in price of each asset
+    % XVal - are the predictors
+    % yPred - is the predicted change in price of each asset
     xTemp = diffClPr(i + lag + j*predTime, indepAsset)';
     xVal = reshape(xTemp.', 1, []);
     xVal = (xVal - mux)./sigmax;
@@ -92,53 +101,42 @@ for j = 1:tradePeriods
     yPred(j,:) = XVal*b;
     
     % Validation
+    % yVal - is the actual price change measured at the end of the
+    % prediction time
     yVal(j,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
         - clPr(i + lag(end) + j*predTime, depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
     
     % Dates adjustment
+    % At each predicted day, the date is extracted
     datez(j,:) = dates(i + lag(end) + (j+1)*predTime);
 end
 
 
 %% Strategy
+% gamma - is the position (1 or -1) for each asset
+% ret - is the risk adjusted return for taking a position
+% infoRet - is the information quotient for a strategy
 for i = 1:Ll
     gamma(:,1+(i-1)*Ld:i*Ld) = sign(yPred(:,1+(i-1)*Ld:i*Ld));
     ret(:,1+(i-1)*Ld:i*Ld) = bsxfun (@rdivide, yVal.*gamma(:,1+(i-1)*Ld:i*Ld), std(yVal));
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
         * sqrt(250); % Annualized
 end
+print(infoRet)
 
-% Calculate the holding for using the stategy
+% Calculate the evolution of a holding for each asset
 for ii = 2:length(ret)
     holding(ii,:) = holding(ii - 1, :).*(1 + risk*ret(ii - 1, :));
 end
 
+% Calculate the evolution of the total holding
 for il = 1:Ll
     holdingTot(:,il) = sum(holding(:, (il-1)*Ld + 1: il*Ld), 2)/Ld;
 end
 
 %% Plots
-% Plot accumulated holding for each market
-% figure()
-% hold on;
-% plot(datez(:,1), holding)
-% title('Accumulated Profit')
-% ylabel('Risk-adjusted holding')
-% xlabel('Time [years]')
-% legend('OLS', 'Ridge')
-% datetick('x')
-%
-% % Plot accumulated total holding
-% figure()
-% plot(datez(:,1), holdingTot)
-% title('Accumulated Total Profit')
-% ylabel('Risk-adjusted holding')
-% xlabel('Time [years]')
-% legend('OLS', 'Ridge')
-% datetick('x')
-%
-% %Plot expected returns for each market
+%Plot expected returns for each asset
 % figure()
 % hold on;
 % plot(datez(:,1), yVal)
@@ -150,7 +148,7 @@ end
 % legend('Real data','Prediction', 'Location', 'Northeast');
 % datetick('x')
 
-% Plot the investment
+% Plot the evolution of the total holding
 figure()
 plot(datez, holdingTot)
 ylabel('Holding [$]') % ;)
