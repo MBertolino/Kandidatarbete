@@ -83,11 +83,10 @@ for j = 1:tradePeriods
     % Standardize data and add intercept
     [yTrain, muy, sigmay] = zscore(yTrain);
     [xTrain, mux, sigmax] = zscore(xTrain);
-    XTrain = [ones(size(xTrain(:,1))) xTrain];
     
     % For every invested asset, calculate the regression coefficients
     % using both OLS and Ridge
-    b(:,1:Ll*Ld) = RidgeRegress(yTrain, XTrain, lambda);
+    b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrain, lambda);
     
     
     %% Prediction & Validation
@@ -97,8 +96,7 @@ for j = 1:tradePeriods
     xTemp = diffClPr(i + lag + j*predTime, indepAsset)';
     xVal = reshape(xTemp.', 1, []);
     xVal = (xVal - mux)./sigmax;
-    XVal = [ones(size(xVal(:,1))) xVal];
-    yPred(j,:) = XVal*b;
+    yPred(j,:) = xVal*b;
     
     % Validation
     % yVal - is the actual price change measured at the end of the
@@ -123,7 +121,7 @@ for i = 1:Ll
     infoRet(i) = mean(ret(:,1+(i-1)*Ld:i*Ld))/std(ret(:,1+(i-1)*Ld:i*Ld)) ...
         * sqrt(250); % Annualized
 end
-print(infoRet)
+infoRet
 
 % Calculate the evolution of a holding for each asset
 for ii = 2:length(ret)
