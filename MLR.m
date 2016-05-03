@@ -16,8 +16,9 @@ tic;
 load('KexJobbData.mat')
 
 % Assets
-names = assetClassNames(4);
-depAsset = find(assetClass == 4); % 1:13 14:22 23:35 36:40
+class = 1;
+name = assetClassNames(class);
+depAsset = find(assetClass == class); % 1:13 14:22 23:35 36:40
 indepAsset = depAsset;
 Ld = length(depAsset);
 Li = length(indepAsset);
@@ -25,7 +26,7 @@ Li = length(indepAsset);
 % Prediction Param
 lag = 1:21;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
-trainTime = 400;
+trainTime = 650;
 lambda = [0 1e2 1e3 1e4];
 Ll = length(lambda);
 
@@ -151,7 +152,7 @@ figure()
 plot(datez, holdingTot)
 ylabel('Holding [$]') % ;)
 xlabel('Time [Days]')
-title(['Holding using MLR on ' names])
+title(['Holding using MLR on ' name])
 str = cellstr(num2str(lambda', 'lambda = %d'));
 legend(str, 'Location', 'NorthWest');
 datetick('x')
