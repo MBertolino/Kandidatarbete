@@ -6,7 +6,7 @@ y - Dependent assets in which to choose a long or short position
     Price change from today to predTime days ahead
 
 x - Assumed independent assets used to make a prediction
-    Price change from day t-1 to t in the range of lag(end) days back
+    Price change from day t-1 to t in the range of lag days back
 %}
 tic;
 
@@ -24,10 +24,10 @@ Ld = length(depAsset);
 Li = length(indepAsset);
 
 % Prediction Param
-lag = 1:21;                       % How many days ago we look at the indep assets
+lag = 20;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
-trainTime = 650;
-lambda = [0 1e2 1e3 1e4];
+trainTime = lag*Li+2*predTime;
+lambda = [0 1e1 1e2 1e3 1e4];
 Ll = length(lambda);
 
 % Investment Param
@@ -43,8 +43,8 @@ tradePeriods = floor((length(dates) - trainTime - predTime)/predTime) - 1;
 diffClPr = diff(clPr);
 
 % Pre-allocating
-yTrain = zeros(trainTime - lag(end) - predTime, Ld);
-xTrain = zeros(trainTime - lag(end) - predTime, lag(end)*Li);
+yTrain = zeros(trainTime - lag - predTime, Ld);
+xTrain = zeros(trainTime - lag - predTime, lag*Li);
 yVal = zeros(tradePeriods, Ld);
 yPred = zeros(tradePeriods, Ll*Ld);
 sigmay = yVal;
@@ -55,30 +55,22 @@ holding(1,:) = bankStart;
 
 
 %% Regression
-% Initial step
 % Data relating assets to be predicted, y, and assets to use as
 % predictors, x. For each day in a tradePeriods sized window y and x are
 % related.
-% yTrain - is the training set of the to-be-predicted y
-% xTrain - is the training set of the predictors x
-for i = 1:trainTime - predTime - lag(end)
-    yTrain(i,:) = clPr(i + lag(end) + predTime, depAsset) ...
-        - clPr(i + lag(end), depAsset);
-    xTemp = diffClPr(i + lag, indepAsset)';
-    xTrain(i,:) = reshape(xTemp.', 1, []);
-end
-
-% Sliding window
 % After a prediction the training window is moved so only the latest data
 % points are used as training data as they are assumed to be more accurate
+
+% Sliding window
 for j = 1:tradePeriods
-    yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
-    xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
-    for i = predTime:trainTime - lag(end)
-        yTrain(i,:) = clPr(i + lag(end) + j*predTime, depAsset) ...
-            - clPr(i + lag(end) + (j-1)*predTime, depAsset);
-        xTemp = diffClPr(i + lag, indepAsset)';
-        xTrain(i,:) = reshape(xTemp.', 1, []);
+%     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
+%     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
+    for i = 1 + lag:trainTime - predTime
+        yTrain(i-lag, :) = clPr(i + j*predTime, depAsset) ...
+            - clPr(i + (j-1)*predTime, depAsset);
+        xTemp = diffClPr(i - lag + (j-1)*predTime : ...
+            i - 1 + (j-1)*predTime, indepAsset)';
+        xTrain(i-lag, :) = reshape(xTemp.', 1, []);
     end
     
     % Standardize data and add intercept
@@ -91,24 +83,25 @@ for j = 1:tradePeriods
     
     
     %% Prediction & Validation
-    % Prediction of the change in price of each asset
+    % Prediction of the change  in price of each asset
     % XVal - are the predictors
     % yPred - is the predicted change in price of each asset
-    xTemp = diffClPr(i + lag + j*predTime, indepAsset)';
-    xVal = reshape(xTemp.', 1, []);
+    xTemp = diffClPr(i - lag + j*predTime : ...
+        i - 1 + j*predTime, indepAsset)';
+    xVal = reshape(xTemp, 1, []);
     xVal = (xVal - mux)./sigmax;
     yPred(j,:) = xVal*b;
     
     % Validation
     % yVal - is the actual price change measured at the end of the
     % prediction time
-    yVal(j,:) = clPr(i + lag(end) + (j+1)*predTime, depAsset) ...
-        - clPr(i + lag(end) + j*predTime, depAsset);
+    yVal(j,:) = clPr(i + (j+1)*predTime, depAsset) ...
+        - clPr(i + j*predTime, depAsset);
     yVal(j,:) = (yVal(j,:) - muy)./sigmay;
     
     % Dates adjustment
     % At each predicted day, the date is extracted
-    datez(j,:) = dates(i + lag(end) + (j+1)*predTime);
+    datez(j,:) = dates(i + lag + (j+1)*predTime);
 end
 
 
