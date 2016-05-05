@@ -24,9 +24,9 @@ Ld = length(depAsset);
 Li = length(indepAsset);
 
 % Prediction Param
-lag = 20;                       % How many days ago we look at the indep assets
+lag = 42;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
-trainTime = lag*Li+2*predTime;
+trainTime = 2*(lag*(1+Li) + predTime + 1);
 lambda = [0 1e1 1e2 1e3 1e4];
 Ll = length(lambda);
 
@@ -63,8 +63,8 @@ holding(1,:) = bankStart;
 
 % Sliding window
 for j = 1:tradePeriods
-%     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
-%     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
+    %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
+    %     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
     for i = 1 + lag:trainTime - predTime
         yTrain(i-lag, :) = clPr(i + j*predTime, depAsset) ...
             - clPr(i + (j-1)*predTime, depAsset);
