@@ -16,7 +16,7 @@ tic;
 load('KexJobbData.mat')
 
 % Assets
-class = 1;
+class = 4;
 name = assetClassNames(class);
 depAsset = find(assetClass == class); % 1:13 14:22 23:35 36:40
 indepAsset = depAsset;
@@ -24,9 +24,9 @@ Ld = length(depAsset);
 Li = length(indepAsset);
 
 % Prediction Param
-lag = 42;                       % How many days ago we look at the indep assets
+lag = 10;                       % How many days ago we look at the indep assets
 predTime = 21;                    % How many days to predict
-trainTime = 2*(lag*(1+Li) + predTime + 1);
+trainTime = 1*(lag*(1+Li) + predTime + 1);
 lambda = [0 1e1 1e2 1e3 1e4];
 Ll = length(lambda);
 
@@ -47,7 +47,7 @@ yTrain = zeros(trainTime - lag - predTime, Ld);
 xTrain = zeros(trainTime - lag - predTime, lag*Li);
 yVal = zeros(tradePeriods, Ld);
 yPred = zeros(tradePeriods, Ll*Ld);
-sigmay = yVal;
+sigmay = zeros(1, Ld);
 holding = zeros(tradePeriods, Ll*Ld);
 holdingTot = zeros(tradePeriods, Ll);
 datez = holdingTot;
