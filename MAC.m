@@ -2,7 +2,7 @@ clear
 
 % Load Data
 tic;
-load('KexJobbData2.mat')
+load('KexJobbData.mat')
 MAXSharpes = zeros(40);
 MINSharpes = MAXSharpes;
 
@@ -12,15 +12,18 @@ markets = 1;
 =======
 >>>>>>> 3167cf9dfdeceaf033f37d1a19cc00a82c2a5fd7
 ClPR = ClPr(:,markets);
-
 %Positionsbyten, kostnad --> 1/20-dels standardavvikelse.
 %Portföljvikt genom std
 
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 >>>>>>> 3167cf9dfdeceaf033f37d1a19cc00a82c2a5fd7
 %% Process data to ajust for NaNs
+=======
+%% Process data to adjust for NaNs
+>>>>>>> MAC-changes
 %[dates2, ClPr] = removeNaN(dates, ClPr);
 %dates2 = dates2(2862:end-275);
 %ClPr = ClPr(2862:end-275,:);
