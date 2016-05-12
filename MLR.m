@@ -16,9 +16,9 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-lag = [10 20];
+lag = [1 2];
 predTime = 21;                    % How many days to predict
-trainTime = 600;
+trainTime = 1600;
 lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
 
@@ -28,10 +28,9 @@ risk = 0.05;
 
 % Remove NaN's
 % Start at 02-Jan-2009
-% End at 28-Jan-2016
-[dates, clPr] = removeNaN(dates(7447 - trainTime - 2*predTime + 1:end), ...
-    closingPrice(7447 - trainTime - 2*predTime + 1:end, :));
-tradePeriods = floor((length(dates) - trainTime - predTime)/predTime) - 1;
+% End at 06-Jan-2016
+[dates, clPr] = removeNaN(dates(6827:end), closingPrice(6827:end, :));
+tradePeriods = floor((length(dates) - trainTime)/predTime);
 diffClPr = diff(clPr);
 
 % Assets
@@ -67,6 +66,9 @@ for asset = assetIndex
     Li = length(indepAsset(:,1));
     
     for l = 1:length(lag)
+        h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
+            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
+        
         % Pre-allocating
         b = zeros(lag(l)*Li, 1);
         yTrain = zeros(trainTime - lag(l) - predTime, Ld);
@@ -76,9 +78,11 @@ for asset = assetIndex
         sigmay = zeros(1, Ld);
         holding = zeros(tradePeriods, Ll*Ld);
         holdingTot = zeros(tradePeriods, Ll);
-        datez = holdingTot;
         holding(1,:) = bankStart;
+        holdingTod(1,:) = bankStart;
+        datez = holdingTot;
         gamma = zeros(tradePeriods, Ll*Ld);
+        
         
         %% Regression
         % Data relating assets to be predicted, y, and assets to use as
@@ -87,8 +91,6 @@ for asset = assetIndex
         % After a prediction the training window is moved so only the latest data
         % points are used as training data as they are assumed to be more accurate
         
-        h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
-            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
         for iDep = 1:length(depAsset(1,:))
             % Sliding window
             for j = 1:tradePeriods
@@ -147,6 +149,9 @@ for asset = assetIndex
             % gamma - is the position to take for each asset
             % ret - is the risk adjusted return for taking a position
             % sharpe - is the information quotient for a strategy
+            % holding - is the evolution of a holding for each asset
+            % holdingTot - is the evolution of a holding for each asset
+            % group
             
             % Position and return
             gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
@@ -179,11 +184,9 @@ for asset = assetIndex
             datetick('x')
             
         end
-        holdingTot = holdingTot/iDep;
         disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe')])
         close(h);
     end
 end
-holdingTot = holdingTot/iDep;
 hold off;
 toc;
