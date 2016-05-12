@@ -17,19 +17,11 @@ load('KexJobbData.mat')
 
 % Assets
 class = 4;
-<<<<<<< HEAD
 name = {'Equities', 'Fixed Income'};
 % depAsset = find(assetClass == class); % 1:13 14:22 23:35 36:40
 % indepAsset = depAsset;
 depAsset = [1; 13]';
 indepAsset = [1; 13]';
-=======
-name = assetClassNames(class);
-% depAsset = find(assetClass == class); % 1:13 14:22 23:35 36:40
-% indepAsset = depAsset;
-depAsset = [1:5; 6:10; 11:15; 16:20; 21:25; 26:30; 31:35; 36:40]';
-indepAsset = depAsset;
->>>>>>> master
 Ld = length(depAsset(:,1));
 Li = length(indepAsset(:,1));
 
