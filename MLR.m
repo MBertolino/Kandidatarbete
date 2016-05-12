@@ -1,3 +1,5 @@
+% try
+
 clear;
 %{
 y = b1x1 + b2x2 + ... + bnxn + e
@@ -16,10 +18,13 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-lag = [10 20];
-predTime = 21;                    % How many days to predict
-trainTime = 600;
-lambda = [0 1e0 1e1 1e2 1e3];
+trainTime = 100;
+predTime = 1;                    % How many days to predict
+
+% Setup Param
+lag = [10];
+assetIndex = 1;
+lambda = [1e2 1e3];
 Ll = length(lambda);
 
 % Investment Param
@@ -28,16 +33,14 @@ risk = 0.05;
 
 % Remove NaN's
 % Start at 02-Jan-2009
-% End at 28-Jan-2016
-[dates, clPr] = removeNaN(dates(7447 - trainTime - 2*predTime + 1:end), ...
-    closingPrice(7447 - trainTime - 2*predTime + 1:end, :));
-tradePeriods = floor((length(dates) - trainTime - predTime)/predTime) - 1;
+% End at 06-Jan-2016
+[dates, clPr] = removeNaN(dates(6827:end), closingPrice(6827:end, :));
+tradePeriods = floor((length(dates) - trainTime)/predTime);
 diffClPr = diff(clPr);
 
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
     'Commodities 1', 'Commodities 2', 'Foreign Exchange'};
-assetIndex = 1:2;
 % Calculate all asset classes at ones
 for asset = assetIndex
     switch(asset)
@@ -76,9 +79,11 @@ for asset = assetIndex
         sigmay = zeros(1, Ld);
         holding = zeros(tradePeriods, Ll*Ld);
         holdingTot = zeros(tradePeriods, Ll);
-        datez = holdingTot;
         holding(1,:) = bankStart;
+        holdingTod(1,:) = bankStart;
+        datez = holdingTot;
         gamma = zeros(tradePeriods, Ll*Ld);
+        
         
         %% Regression
         % Data relating assets to be predicted, y, and assets to use as
@@ -86,10 +91,9 @@ for asset = assetIndex
         % related.
         % After a prediction the training window is moved so only the latest data
         % points are used as training data as they are assumed to be more accurate
-        
-        h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
-            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
         for iDep = 1:length(depAsset(1,:))
+            h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
+                ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
             % Sliding window
             for j = 1:tradePeriods
                 %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
@@ -139,7 +143,7 @@ for asset = assetIndex
                 % At each predicted day, the date is extracted
                 datez(j,:) = dates(i + (j+1)*predTime);
                 
-                waitbar(j/tradePeriods)
+                waitbar(j/tradePeriods);
             end
             
             
@@ -147,6 +151,9 @@ for asset = assetIndex
             % gamma - is the position to take for each asset
             % ret - is the risk adjusted return for taking a position
             % sharpe - is the information quotient for a strategy
+            % holding - is the evolution of a holding for each asset
+            % holdingTot - is the evolution of a holding for each asset
+            % group
             
             % Position and return
             gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
@@ -177,13 +184,17 @@ for asset = assetIndex
             str = cellstr(num2str(lambda', 'lambda = %d'));
             legend(str, 'Location', 'NorthWest');
             datetick('x')
-            
         end
-        holdingTot = holdingTot/iDep;
         disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe')])
         close(h);
     end
 end
-holdingTot = holdingTot/iDep;
 hold off;
 toc;
+load('handel')
+sound(y,Fs)
+
+% catch
+%     setpref('Internet','E_mail','mattias.bertolino@gmail.com');
+%     sendmail('mattias.bertolino@gmail.com','Calculation failed.')
+% end
