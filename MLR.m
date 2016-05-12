@@ -1,3 +1,5 @@
+% try
+
 clear;
 %{
 y = b1x1 + b2x2 + ... + bnxn + e
@@ -16,10 +18,13 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-lag = [1 2];
-predTime = 21;                    % How many days to predict
-trainTime = 1600;
-lambda = [0 1e0 1e1 1e2 1e3];
+trainTime = 100;
+predTime = 1;                    % How many days to predict
+
+% Setup Param
+lag = [10];
+assetIndex = 1;
+lambda = [1e2 1e3];
 Ll = length(lambda);
 
 % Investment Param
@@ -36,7 +41,6 @@ diffClPr = diff(clPr);
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
     'Commodities 1', 'Commodities 2', 'Foreign Exchange'};
-assetIndex = 1:2;
 % Calculate all asset classes at ones
 for asset = assetIndex
     switch(asset)
@@ -66,9 +70,6 @@ for asset = assetIndex
     Li = length(indepAsset(:,1));
     
     for l = 1:length(lag)
-        h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
-            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
-        
         % Pre-allocating
         b = zeros(lag(l)*Li, 1);
         yTrain = zeros(trainTime - lag(l) - predTime, Ld);
@@ -90,8 +91,9 @@ for asset = assetIndex
         % related.
         % After a prediction the training window is moved so only the latest data
         % points are used as training data as they are assumed to be more accurate
-        
         for iDep = 1:length(depAsset(1,:))
+            h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
+                ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
             % Sliding window
             for j = 1:tradePeriods
                 %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
@@ -141,7 +143,7 @@ for asset = assetIndex
                 % At each predicted day, the date is extracted
                 datez(j,:) = dates(i + (j+1)*predTime);
                 
-                waitbar(j/tradePeriods)
+                waitbar(j/tradePeriods);
             end
             
             
@@ -182,7 +184,6 @@ for asset = assetIndex
             str = cellstr(num2str(lambda', 'lambda = %d'));
             legend(str, 'Location', 'NorthWest');
             datetick('x')
-            
         end
         disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe')])
         close(h);
@@ -190,3 +191,10 @@ for asset = assetIndex
 end
 hold off;
 toc;
+load('handel')
+sound(y,Fs)
+
+% catch
+%     setpref('Internet','E_mail','mattias.bertolino@gmail.com');
+%     sendmail('mattias.bertolino@gmail.com','Calculation failed.')
+% end
