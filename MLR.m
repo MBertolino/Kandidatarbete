@@ -3,10 +3,8 @@
 clear;
 %{
 y = b1x1 + b2x2 + ... + bnxn + e
-
 y - Dependent assets in which to choose a long or short position
     Price change from today to predTime days ahead
-
 x - Assumed independent assets used to make a prediction
     Price change from day t-1 to t in the range of lag days back
 %}
@@ -18,13 +16,13 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-trainTime = 100;
-predTime = 1;                    % How many days to predict
+trainTime = 1640;
+predTime = 21;                    % How many days to predict
 
 % Setup Param
-lag = [10];
-assetIndex = 1;
-lambda = [1e2 1e3];
+lag = [100 200];
+assetIndex = 1:7;
+lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
 
 % Investment Param
@@ -91,100 +89,98 @@ for asset = assetIndex
         % related.
         % After a prediction the training window is moved so only the latest data
         % points are used as training data as they are assumed to be more accurate
-        for iDep = 1:length(depAsset(1,:))
-            h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
-                ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
-            % Sliding window
-            for j = 1:tradePeriods
-                %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
-                %     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
-                for i = 1 + lag(l):trainTime - predTime
-                    yTrain(i-lag(l), :) = clPr(i + 1 + j*predTime, depAsset(:,iDep)) ...
-                        - clPr(i + 1 + (j-1)*predTime, depAsset(:,iDep));
-                    xTemp = diffClPr(i - lag(l) + (j-1)*predTime : ...
-                        i - 1 + (j-1)*predTime, indepAsset(:,iDep))';
-                    xTrain(i-lag(l), :) = reshape(xTemp.', 1, []);
-                end
-                
-                % Standardize data and add intercept
-                [yTrain, muy, sigmay] = zscore(yTrain);
-                [xTrain, mux, sigmax] = zscore(xTrain);
-                
-                % For every invested asset, calculate the regression coefficients
-                % using both OLS and Ridge
-                b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrain, lambda);
-                
-                
-                %% Prediction & Validation
-                % Prediction of the change  in price of each asset
-                % XVal - are the predictors
-                % yPred - is the predicted change in price of each asset
-                xTemp = diffClPr(i - lag(l) + j*predTime : ...
-                    i - 1 + j*predTime, indepAsset(:,iDep))';
-                xVal = reshape(xTemp, 1, []);
-                xVal = (xVal - mux)./sigmax;
-                yPred(j,:) = xVal*b;
-                
-                % Smart positioning (optional)
-                if j > 99
-                    gamma(j,:) = yPred(j,:)./mean(abs(yPred(j-99:j,:)));
-                else
-                    gamma(j,:) = yPred(j,:)./mean(abs(yPred(1:j,:)));
-                end
-                
-                % Validation
-                % yVal - is the actual price change measured at the end of the
-                % prediction time
-                yVal(j,:) = clPr(i + (j+1)*predTime, depAsset(:,iDep)) ...
-                    - clPr(i + j*predTime, depAsset(:,iDep));
-                yVal(j,:) = (yVal(j,:) - muy)./sigmay;
-                
-                % Dates adjustment
-                % At each predicted day, the date is extracted
-                datez(j,:) = dates(i + (j+1)*predTime);
-                
-                waitbar(j/tradePeriods);
+        h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
+            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
+        % Sliding window
+        for j = 1:tradePeriods
+            %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
+            %     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
+            for i = 1 + lag(l):trainTime - predTime
+                yTrain(i-lag(l), :) = clPr(i + j*predTime, depAsset) ...
+                    - clPr(i + (j-1)*predTime, depAsset);
+                xTemp = diffClPr(i - lag(l) + (j-1)*predTime : ...
+                    i - 1 + (j-1)*predTime, indepAsset)';
+                xTrain(i-lag(l), :) = reshape(xTemp.', 1, []);
             end
             
+            % Standardize data
+            [yTrain, muy, sigmay] = zscore(yTrain);
+            [xTrain, mux, sigmax] = zscore(xTrain);
             
-            %% Strategy
-            % gamma - is the position to take for each asset
-            % ret - is the risk adjusted return for taking a position
-            % sharpe - is the information quotient for a strategy
-            % holding - is the evolution of a holding for each asset
-            % holdingTot - is the evolution of a holding for each asset
-            % group
+            % For every invested asset, calculate the regression coefficients
+            % using both OLS and Ridge
+            b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrain, lambda);
             
-            % Position and return
-            gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
-            %     gamma = sign(yPred);                           % +/- 1
-            ret = bsxfun (@rdivide, repmat(yVal,1,Ll).*gamma, repmat(std(yVal),1,Ll));
             
-            % Calculate the evolution of a holding for each asset
-            for ih = 2:length(ret)
-                holding(ih,:) = holding(ih - 1, :).*(1 + risk*ret(ih - 1, :));
+            %% Prediction & Validation
+            % Prediction of the change  in price of each asset
+            % XVal - are the predictors
+            % yPred - is the predicted change in price of each asset
+            xTemp = diffClPr(i - lag(l) + j*predTime : ...
+                i - 1 + j*predTime, indepAsset)';
+            xVal = reshape(xTemp, 1, []);
+            xVal = (xVal - mux)./sigmax;
+            yPred(j,:) = xVal*b;
+            
+            % Smart positioning (optional)
+            if j > 99
+                gamma(j,:) = yPred(j,:)./mean(abs(yPred(j-99:j,:)));
+            else
+                gamma(j,:) = yPred(j,:)./mean(abs(yPred(1:j,:)));
             end
             
-            % Calculate the evolution of the total holding
-            for il = 1:Ll
-                sharpe(il,iDep) = mean(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
-                    /std(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
-                    * sqrt(250/predTime); % Annualized
-                holdingTot(:,il) = holdingTot(:,il) + sum(holding(:, (il-1)*Ld + 1:il*Ld), 2)/Ld;
-            end
+            % Validation
+            % yVal - is the actual price change measured at the end of the
+            % prediction time
+            yVal(j,:) = clPr(i + (j+1)*predTime, depAsset) ...
+                - clPr(i + j*predTime, depAsset);
+            yVal(j,:) = (yVal(j,:) - muy)./sigmay;
             
+            % Dates adjustment
+            % At each predicted day, the date is extracted
+            datez(j,:) = dates(i + (j+1)*predTime);
             
-            %% Plots
-            % Plot the evolution of the total holding
-            figure()
-            plot(datez, holdingTot)
-            ylabel('Holding [$]') % ;)
-            xlabel('Time [Days]')
-            title(['Holding using MLR on ' name(asset) ' with lag ' lag(l)])
-            str = cellstr(num2str(lambda', 'lambda = %d'));
-            legend(str, 'Location', 'NorthWest');
-            datetick('x')
+            waitbar(j/tradePeriods);
         end
+        
+        
+        %% Strategy
+        % gamma - is the position to take for each asset
+        % ret - is the risk adjusted return for taking a position
+        % sharpe - is the information quotient for a strategy
+        % holding - is the evolution of a holding for each asset
+        % holdingTot - is the evolution of a holding for each asset
+        % group
+        
+        % Position and return
+        gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
+        %         gamma = sign(yPred);                           % +/- 1
+        ret = bsxfun (@rdivide, repmat(yVal,1,Ll).*gamma, repmat(std(yVal),1,Ll));
+        
+        % Calculate the evolution of a holding for each asset
+        for ih = 2:length(ret)
+            holding(ih,:) = holding(ih - 1, :).*(1 + risk*ret(ih - 1, :));
+        end
+        
+        % Calculate the evolution of the total holding for every lambda
+        for il = 1:Ll
+            sharpe(il,:) = mean(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
+                /std(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
+                * sqrt(250/predTime); % Annualized
+            holdingTot(:,il) = holdingTot(:,il) + sum(holding(:, (il-1)*Ld + 1:il*Ld), 2)/Ld;
+        end
+        
+        
+        %% Plots
+        % Plot the evolution of the total holding
+        figure()
+        plot(datez, holdingTot)
+        ylabel('Holding [$]') % ;)
+        xlabel('Time [Days]')
+        title(['Holding using MLR on ' name(asset) ' with lag ' lag(l)])
+        str = cellstr(num2str(lambda', 'lambda = %d'));
+        legend(str, 'Location', 'NorthWest');
+        datetick('x')
         disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe')])
         close(h);
     end
