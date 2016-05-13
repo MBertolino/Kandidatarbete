@@ -29,13 +29,6 @@ Ll = length(lambda);
 bankStart = 10000;
 risk = 0.05;
 
-% Remove NaN's
-% Start at 02-Jan-2009
-% End at 06-Jan-2016
-[dates, clPr] = removeNaN(dates(6827:end), closingPrice(6827:end, :));
-tradePeriods = floor((length(dates) - trainTime)/predTime);
-diffClPr = diff(clPr);
-
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
     'Commodities 1', 'Commodities 2', 'Foreign Exchange'};
@@ -68,6 +61,13 @@ for asset = assetIndex
     Li = length(indepAsset(:,1));
     
     for l = 1:length(lag)
+        % Remove NaN's
+        % Start at 02-Jan-2009
+        % End at 06-Jan-2016
+        [datesNoNaN, clPr] = removeNaN(dates(7273 - lag(l):end), closingPrice(7273 - lag(l):end, :));
+        tradePeriods = floor((length(datesNoNaN) - trainTime)/predTime);
+        diffClPr = diff(clPr);
+        
         % Pre-allocating
         b = zeros(lag(l)*Li, 1);
         yTrain = zeros(trainTime - lag(l) - predTime, Ld);
@@ -138,7 +138,7 @@ for asset = assetIndex
             
             % Dates adjustment
             % At each predicted day, the date is extracted
-            datez(j,:) = dates(i + (j+1)*predTime);
+            datesAdjusted(j,:) = datesNoNaN(i + (j+1)*predTime);
             
             waitbar(j/tradePeriods);
         end
@@ -174,7 +174,7 @@ for asset = assetIndex
         %% Plots
         % Plot the evolution of the total holding
         figure()
-        plot(datez, holdingTot)
+        plot(datesAdjusted, holdingTot)
         ylabel('Holding [$]') % ;)
         xlabel('Time [Days]')
         title(['Holding using MLR on ' name(asset) ' with lag ' lag(l)])
