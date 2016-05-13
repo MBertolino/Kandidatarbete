@@ -4,6 +4,7 @@ clear;
 %{
 y = b1x1 + b2x2 + ... + bnxn + e
 
+snapnow;
 y - Dependent assets in which to choose a long or short position
     Price change from today to predTime days ahead
 
@@ -18,13 +19,13 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-trainTime = 100;
-predTime = 1;                    % How many days to predict
+trainTime = 1640;
+predTime = 21;                    % How many days to predict
 
 % Setup Param
-lag = [10];
-assetIndex = 1;
-lambda = [1e2 1e3];
+lag = [100 200];
+assetIndex = 1:7;
+lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
 
 % Investment Param
@@ -34,7 +35,7 @@ risk = 0.05;
 % Remove NaN's
 % Start at 02-Jan-2009
 % End at 06-Jan-2016
-[dates, clPr] = removeNaN(dates(6827:end), closingPrice(6827:end, :));
+[dates, clPr] = removeNaN(dates(7427-trainTime:end), closingPrice(7427-trainTime:end, :));
 tradePeriods = floor((length(dates) - trainTime)/predTime);
 diffClPr = diff(clPr);
 
@@ -99,8 +100,8 @@ for asset = assetIndex
                 %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
                 %     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
                 for i = 1 + lag(l):trainTime - predTime
-                    yTrain(i-lag(l), :) = clPr(i + 1 + j*predTime, depAsset(:,iDep)) ...
-                        - clPr(i + 1 + (j-1)*predTime, depAsset(:,iDep));
+                    yTrain(i-lag(l), :) = clPr(i + j*predTime, depAsset(:,iDep)) ...
+                        - clPr(i + (j-1)*predTime, depAsset(:,iDep));
                     xTemp = diffClPr(i - lag(l) + (j-1)*predTime : ...
                         i - 1 + (j-1)*predTime, indepAsset(:,iDep))';
                     xTrain(i-lag(l), :) = reshape(xTemp.', 1, []);
