@@ -103,7 +103,7 @@ for asset = assetIndex
                 xTrain(i-lag(l), :) = reshape(xTemp.', 1, []);
             end
             
-            % Standardize data and add intercept
+            % Standardize data
             [yTrain, muy, sigmay] = zscore(yTrain);
             [xTrain, mux, sigmax] = zscore(xTrain);
             
