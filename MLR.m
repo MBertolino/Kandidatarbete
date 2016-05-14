@@ -16,25 +16,19 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-trainTime = 1640;
+trainTime = 1640; %1640
 predTime = 21;                    % How many days to predict
+timeFrame = [5787];               % Frame to remove NaN
 
 % Setup Param
 lag = [100 200];
-assetIndex = 1:7;
+assetIndex = 1;
 lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
 
 % Investment Param
 bankStart = 10000;
 risk = 0.05;
-
-% Remove NaN's
-% Start at 02-Jan-2009
-% End at 06-Jan-2016
-[dates, clPr] = removeNaN(dates(6827:end), closingPrice(6827:end, :));
-tradePeriods = floor((length(dates) - trainTime)/predTime);
-diffClPr = diff(clPr);
 
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
@@ -68,6 +62,13 @@ for asset = assetIndex
     Li = length(indepAsset(:,1));
     
     for l = 1:length(lag)
+        % Remove NaN's
+        % Start at 02-Jan-2009
+        % End at 06-Jan-2016
+        [datesNoNaN, clPr] = removeNaN(dates(5787:end), closingPrice(5787:end, :));
+        tradePeriods = floor((length(datesNoNaN) - trainTime)/predTime);
+        diffClPr = diff(clPr);
+        
         % Pre-allocating
         b = zeros(lag(l)*Li, 1);
         yTrain = zeros(trainTime - lag(l) - predTime, Ld);
@@ -93,9 +94,17 @@ for asset = assetIndex
             ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
         % Sliding window
         for j = 1:tradePeriods
-            %     yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
-            %     xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
-            for i = 1 + lag(l):trainTime - predTime
+            % Speed Up - reuse data
+            if j > 1
+                yTrain(1:end - predTime, :) = yTrain(predTime + 1:end, :);
+                xTrain(1:end - predTime, :) = xTrain(predTime + 1:end, :);
+                start = trainTime - 2*predTime;
+            else
+                start = 1 + lag(l);
+            end
+            
+            % Train the model
+            for i = 1+lag(l):trainTime - predTime
                 yTrain(i-lag(l), :) = clPr(i + j*predTime, depAsset) ...
                     - clPr(i + (j-1)*predTime, depAsset);
                 xTemp = diffClPr(i - lag(l) + (j-1)*predTime : ...
@@ -138,7 +147,7 @@ for asset = assetIndex
             
             % Dates adjustment
             % At each predicted day, the date is extracted
-            datez(j,:) = dates(i + (j+1)*predTime);
+            datesAdjusted(j,:) = datesNoNaN(i + (j+1)*predTime);
             
             waitbar(j/tradePeriods);
         end
@@ -155,26 +164,25 @@ for asset = assetIndex
         % Position and return
         gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
         %         gamma = sign(yPred);                           % +/- 1
-        ret = bsxfun (@rdivide, repmat(yVal,1,Ll).*gamma, repmat(std(yVal),1,Ll));
+        ret = bsxfun (@rdivide, repelem(yVal,1,Ll).*gamma, repelem(std(yVal),1,Ll));
         
         % Calculate the evolution of a holding for each asset
-        for ih = 2:length(ret)
+        for ih = 2:length(ret(:,1))
             holding(ih,:) = holding(ih - 1, :).*(1 + risk*ret(ih - 1, :));
         end
         
         % Calculate the evolution of the total holding for every lambda
         for il = 1:Ll
-            sharpe(il,:) = mean(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
-                /std(ret(:, 1 + (il-1)*Ld:il*Ld)) ...
+            sharpe(il,:) = mean(ret(:,il:Ll:Ll*Ld)) ...
+                /std(ret(:, il:Ll:Ll*Ld)) ...
                 * sqrt(250/predTime); % Annualized
-            holdingTot(:,il) = holdingTot(:,il) + sum(holding(:, (il-1)*Ld + 1:il*Ld), 2)/Ld;
+            holdingTot(:,il) = holdingTot(:,il) + sum(holding(:, il:Ll:Ll*Ld), 2)/Ld;
         end
-        
         
         %% Plots
         % Plot the evolution of the total holding
         figure()
-        plot(datez, holdingTot)
+        plot(datesAdjusted, holdingTot)
         ylabel('Holding [$]') % ;)
         xlabel('Time [Days]')
         title(['Holding using MLR on ' name(asset) ' with lag ' lag(l)])
