@@ -22,7 +22,7 @@ timeFrame = [5787];               % Frame to remove NaN
 
 % Setup Param
 lag = [100 200];
-assetIndex = 1;
+assetIndex = 1:7;
 lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
 
