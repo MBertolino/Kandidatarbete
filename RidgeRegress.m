@@ -1,22 +1,18 @@
-function bOut = RidgeRegress(yTrain, XTrain, lambda)
+function bOut = RidgeRegress(yTrain, xTrain, lambda)
 
-[rowX, colX] = size(XTrain);
+[rowX, colX] = size(xTrain);
 [rowy, coly] = size(yTrain);
 lambdaLength = length(lambda);
 
-% Penalty factor
-ridgeEye = eye(colX);
-
-% Solve with svd
-[U, D, V] = svd(XTrain);
-
-bOut = [];
-b = zeros(colX, coly);
-for j = 1:lambdaLength
-    for m = 1:coly
-        b(:,m) = V*((D'*D + lambda(j)*ridgeEye)\D'*U'*yTrain(:,m));
-    end
-    bOut = [bOut b];
+ridgeEye = [];
+for i = 1:lambdaLength
+ridgeEye = blkdiag(ridgeEye, lambda(i)*eye(colX));
 end
+
+[U, D, V] = svd(xTrain);
+diagD = diag(repmat(diag(D'*D),lambdaLength,1));
+
+b = reshape((diagD + ridgeEye)\repmat(D'*U'*yTrain,lambdaLength,1), colX, coly*lambdaLength);
+bOut = V*b; 
 
 end
