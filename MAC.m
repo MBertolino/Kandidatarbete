@@ -195,6 +195,10 @@ for iw = 1:iWeights
         maxSharpe = nanmax(nanmax(nanmax(g)));
         MAXSharpes(iw,im) = maxSharpe;
         [iLong, iShort] = find (g==maxSharpe);
+        if length(iLong)>1
+            iLong = floor(mean(iLong));
+            iShort = floor(mean(iShort));
+        end
         longShort(iw,im,1) = longVector(iLong);
         longShort(iw,im,2) = shortVector(iShort);
         close(h);
@@ -205,4 +209,7 @@ end
 %xlabel 'Length of long mean'
 %ylabel 'Length of short mean'
 %zlabel 'Sharpe Ratio'
+
+%stem(reshape(longShort(:,:,1),24,1));
+
 t=toc;
