@@ -21,14 +21,14 @@ predTime = 21;                    % How many days to predict
 timeFrame = [5787];               % Frame to remove NaN
 
 % Setup Param
-lag = [100 200];
+lag = [100];
 assetIndex = 1:7;
-lambda = [0 1e0 1e1 1e2 1e3];
+lambda = [0 1e8];
 Ll = length(lambda);
 
 % Investment Param
 bankStart = 10000;
-risk = 0.05;
+risk = 0.01;
 
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
@@ -79,8 +79,8 @@ for asset = assetIndex
         holding = zeros(tradePeriods, Ll*Ld);
         holdingTot = zeros(tradePeriods, Ll);
         holding(1,:) = bankStart;
-        holdingTod(1,:) = bankStart;
-        datez = holdingTot;
+        holdingTot(1,:) = bankStart;
+        datesAdjusted = holdingTot;
         gamma = zeros(tradePeriods, Ll*Ld);
         
         
@@ -104,7 +104,7 @@ for asset = assetIndex
             end
             
             % Train the model
-            for i = 1+lag(l):trainTime - predTime
+            for i = start:trainTime - predTime
                 yTrain(i-lag(l), :) = clPr(i + j*predTime, depAsset) ...
                     - clPr(i + (j-1)*predTime, depAsset);
                 xTemp = diffClPr(i - lag(l) + (j-1)*predTime : ...
@@ -113,23 +113,23 @@ for asset = assetIndex
             end
             
             % Standardize data
-            [yTrain, muy, sigmay] = zscore(yTrain);
-            [xTrain, mux, sigmax] = zscore(xTrain);
+            [yTrainStd, muy, sigmay] = zscore(yTrain); 
+            [xTrainStd, mux, sigmax] = zscore(xTrain);
             
             % For every invested asset, calculate the regression coefficients
             % using both OLS and Ridge
             b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrain, lambda);
             
-            
             %% Prediction & Validation
             % Prediction of the change  in price of each asset
-            % XVal - are the predictors
+            % xPred - are the predictors
             % yPred - is the predicted change in price of each asset
             xTemp = diffClPr(i - lag(l) + j*predTime : ...
                 i - 1 + j*predTime, indepAsset)';
-            xVal = reshape(xTemp, 1, []);
-            xVal = (xVal - mux)./sigmax;
-            yPred(j,:) = xVal*b;
+            xPred = reshape(xTemp, 1, []);
+            %                         xPred = (xPred - mux)./sigmax;
+            xPred = (xPred - mean([xTrain(end-99:end, :); xPred]))./std([xTrain(end-99:end, :); xPred]);
+            yPred(j,:) = xPred*b;
             
             % Smart positioning (optional)
             if j > 99
@@ -164,20 +164,21 @@ for asset = assetIndex
         % Position and return
         gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1)); % Smart
         %         gamma = sign(yPred);                           % +/- 1
-        ret = bsxfun (@rdivide, repelem(yVal,1,Ll).*gamma, repelem(std(yVal),1,Ll));
+%                 ret = bsxfun (@rdivide, repelem(yVal,1,Ll).*gamma, repelem(std(yVal),1,Ll));
+        ret = repelem(yVal,1,Ll).*gamma;
+        retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), 1:Ll, 'uni', 0));
+        sharpe = mean(retTot)./std(retTot)*sqrt(250/predTime);
         
         % Calculate the evolution of a holding for each asset
         for ih = 2:length(ret(:,1))
-            holding(ih,:) = holding(ih - 1, :).*(1 + risk*ret(ih - 1, :));
+            holdingTot(ih,:) = holdingTot(ih - 1, :).*(1 + risk*retTot(ih - 1, :));
         end
         
-        % Calculate the evolution of the total holding for every lambda
-        for il = 1:Ll
-            sharpe(il,:) = mean(ret(:,il:Ll:Ll*Ld)) ...
-                /std(ret(:, il:Ll:Ll*Ld)) ...
-                * sqrt(250/predTime); % Annualized
-            holdingTot(:,il) = holdingTot(:,il) + sum(holding(:, il:Ll:Ll*Ld), 2)/Ld;
-        end
+        %         % Calculate the evolution of the total holding for every lambda
+        %         for il = 1:Ll
+        %             holdingTot(:,il) = sum(holding(:, il:Ll:Ll*Ld), 2)/Ld;
+        %         end
+        
         
         %% Plots
         % Plot the evolution of the total holding
@@ -189,7 +190,7 @@ for asset = assetIndex
         str = cellstr(num2str(lambda', 'lambda = %d'));
         legend(str, 'Location', 'NorthWest');
         datetick('x')
-        disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe')])
+        disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe)])
         close(h);
     end
 end
