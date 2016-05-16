@@ -1,18 +1,17 @@
-function bOut = RidgeRegress(yTrain, xTrain, lambda)
+function bOut = RidgeRegress(yTrain, xTrain, lambda, ridgeEye)
 
 [rowX, colX] = size(xTrain);
 [rowy, coly] = size(yTrain);
 lambdaLength = length(lambda);
 
-ridgeEye = [];
-for i = 1:lambdaLength
-ridgeEye = blkdiag(ridgeEye, lambda(i)*eye(colX));
-end
-
 [U, D, V] = svd(xTrain);
+
+% Resize to match number of tuning parameters lambda
 diagD = diag(repmat(diag(D'*D),lambdaLength,1));
 
-b = reshape((diagD + ridgeEye)\repmat(D'*U'*yTrain,lambdaLength,1), colX, coly*lambdaLength);
-bOut = V*b; 
+% Regress for all tuning parameters and dependent variables at once
+b = (diagD + ridgeEye)\repmat(D'*U'*yTrain, lambdaLength, 1);
+b = reshape(b, colX, coly*lambdaLength);
+bOut = V*b;
 
 end
