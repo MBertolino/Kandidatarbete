@@ -16,13 +16,13 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-trainTime = 2200;
+trainTime = 2500;
 predTime = 21;                 % How many days to predict
 timeFrame = 7448;              % Frame to remove NaN
-lag = [200];
-lambda = [0 1e0 1e1 1e2 1e3];
+lag = [300];
+lambda = [0 1e0 1e1 1e2 1e3 1e4];
 Ll = length(lambda);
-stdTime = 20;
+stdTime = 99;
 
 % Investment Param
 assetIndex = 1:7;
