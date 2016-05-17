@@ -19,9 +19,10 @@ load('KexJobbData.mat')
 trainTime = 2200;
 predTime = 21;                 % How many days to predict
 timeFrame = 7448;              % Frame to remove NaN
-lag = [100 200 300];
-lambda = [0 1e0 1e1 1e2 1e3 1e4 1e5];
+lag = [200];
+lambda = [0 1e0 1e1 1e2 1e3];
 Ll = length(lambda);
+stdTime = 20;
 
 % Investment Param
 assetIndex = 1:7;
@@ -121,12 +122,12 @@ for asset = assetIndex
             end
             
             % Standardize data
-            [yTrainStd, muy, sigmay] = zscore(yTrain);
+            %             [yTrainStd, muy, sigmay] = zscore(yTrain);
             [xTrainStd, mux, sigmax] = zscore(xTrain);
             
             % For every invested asset, calculate the regression coefficients
             % using both OLS and Ridge
-            b(:,1:Ll*Ld) = RidgeRegress(yTrainStd, xTrainStd, lambda, ridgeEye);
+            b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrainStd, lambda, ridgeEye);
             
             
             %% Prediction & Validation
@@ -140,20 +141,21 @@ for asset = assetIndex
             yPred(j,:) = xPred*b;
             
             % Smart positioning (optional)
-            if smart > 0
-                if j > 99
-                    gamma(j,:) = yPred(j,:)./mean(abs(yPred(j-99:j,:)));
+            if smart > 0.5
+                if j > stdTime
+                    gamma(j,:) = yPred(j,:)./mean(abs(yPred(j-stdTime:j,:)));
                 else
                     gamma(j,:) = yPred(j,:)./mean(abs(yPred(1:j,:)));
                 end
             end
             
             % Validation
-            % yVal - is the actual price change measured at the end of the
-            % prediction time
+            % yVal - is the actual standardized price change measured
+            % at the end of the prediction time
             yVal(j,:) = clPr(i + (j+1)*predTime, depAsset) ...
                 - clPr(i + j*predTime, depAsset);
-            yVal(j,:) = (yVal(j,:) - muy)./sigmay;
+            yVal(j,:) = (yVal(j,:) - mean(yTrain(end-stdTime:end, :))) ...
+                ./std(yTrain(end-stdTime:end, :));
             
             % Dates adjustment
             % At each predicted day, the date is extracted
@@ -173,15 +175,15 @@ for asset = assetIndex
         % group
         
         % Positioning
-        if smart > 0
+        if smart > 0.5
             gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1));
         else
             gamma = sign(yPred);                           % +/- 1
         end
         
-        % Returns and Sharpe
+        % Returns and Sharpe for each asset (/Ld)
         ret = repelem(yVal,1,Ll).*gamma;
-        retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), 1:Ll, 'uni', 0));
+        retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), 1:Ll, 'uni', 0))/Ld;
         sharpe = mean(retTot)./std(retTot)*sqrt(250/predTime);
         
         % Calculate the development of the total holding for each lambda
