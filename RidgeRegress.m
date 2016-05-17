@@ -7,7 +7,7 @@ lambdaLength = length(lambda);
 [U, D, V] = svd(xTrain);
 
 % Resize to match number of tuning parameters lambda
-diagD = diag(repmat(diag(D'*D),lambdaLength,1));
+diagD = diag(repmat(diag(D'*D), lambdaLength, 1));
 
 % Regress for all tuning parameters and dependent variables at once
 b = (diagD + ridgeEye)\repmat(D'*U'*yTrain, lambdaLength, 1);
