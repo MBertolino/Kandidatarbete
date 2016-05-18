@@ -4,7 +4,6 @@ tic;
 load('KexJobbData.mat')
 
 %% Process data to ajust for NaNs
-
 clPr = closingPrice;
 [dates2, clPr] = removeNaN(dates, clPr);
 dates2 = dates2(2062:end);
@@ -12,14 +11,15 @@ clPr = clPr(2062:end,:);
 
 
 %% Moving Averages
-
 % Parameters
-longVector = (50:50:2000);
-shortVector = (25:25:500);
+% longVector = (50:50:2000);
+% shortVector = (25:25:500);
+longVector = 500;
+shortVector = 200;
 stdevDays = 21;
 
-iWeights = 3;
-iMarkets = 8;
+iWeights = 1;
+iMarkets = 1;
 
 MAXSharpes = zeros(iWeights, iMarkets, 1);
 longShort = zeros(iWeights, iMarkets, 2);
@@ -45,22 +45,23 @@ for iw = 1:iWeights
             ', Market cathegory: ' num2str(im) '/' num2str(iMarkets)]);
         waitbar(im/(iMarkets*iWeights) + (iw - 1)/iWeights)
         
-        if im == 1
-            ClPR = clPr(:,1:6);
-        elseif im == 2
-            ClPR = clPr(:,7:13);
-        elseif im == 3
-            ClPR = clPr(:,14:18);
-        elseif im == 4
-            ClPR = clPr(:,19:22);
-        elseif im == 5
-            ClPR = clPr(:,23:29);
-        elseif im == 6
-            ClPR = clPr(:,30:35);
-        elseif im == 7
-            ClPR = clPr(:,36:40);
-        else
-            ClPR = clPr(:,:);
+        switch(im)
+            case(1)
+                ClPR = clPr(:,1:6);
+            case(2)
+                ClPR = clPr(:,7:13);
+            case(3)
+                ClPR = clPr(:,14:18);
+            case(4)
+                ClPR = clPr(:,19:22);
+            case(5)
+                ClPR = clPr(:,23:29);
+            case(6)
+                ClPR = clPr(:,30:35);
+            case(7)
+                ClPR = clPr(:,36:40);
+            case(8)
+                ClPR = clPr(:,:);
         end
         
         for l = 1:length(longVector)
@@ -72,12 +73,12 @@ for iw = 1:iWeights
                     
                     %% Weights
                     if iw == 1
-                        % Normal Weights
+                        % Normal weights
                         wLong = ones(1, long)/long;
                         wShort = ones(1, short)/short;
-                    elseif iw == 2
-                           
-                        % Exponential Weights
+                    
+                    elseif iw == 2       
+                        % Exponential weights
                         alphaLong = 2/(long + 1); % Smoothing Param
                         wLong = repmat(1-alphaLong, 1, long).^(1:long);
                         wLong = wLong/sum(wLong);
@@ -86,28 +87,29 @@ for iw = 1:iWeights
                         wShort = wShort/sum(wShort);
                         
                     else
-                        %Linear Weights (sums of digits)
+                        % Linear weights (sums of digits)
                         wLong = 1/((long+1)*(long/2)) * flipud((1:long)');
                         wShort = 1/((short+1)*(short/2)) * flipud((1:short)');          
                     end
                     
+                    % Calculate filter
                     avgClL = filter(wLong, 1, ClPR);
                     avgClS = filter(wShort, 1, ClPR);      
                     
                     
                     %% Positioning
-                    [row, col] = size(ClPR); % To be able to redo the matrixes later
+                    [row, col] = size(ClPR); % To be able to redo the matrices later
                     trend = avgClS - avgClL;
                     
                     %{
                     absTrend = abs(trend);
-                    absMeans = zeros(row-short:col);
-                    for mm = 1:row-short
-                        absMeans(mm,:) = mean(absTrend(mm:mm+short,:));
+                    absMeans = zeros(row - short:col);
+                    for mm = 1:row - short
+                        absMeans(mm,:) = mean(absTrend(mm:mm + short, :));
                     end
                     trendMean = [ones(short,col); absMeans];
                     gamma = trend./trendMean;
-                    gamma(abs(gamma)>1) = sign(trend(abs(gamma)>1));
+                    gamma(abs(gamma) > 1) = sign(trend(abs(gamma) > 1));
                     %}
                     
                     gamma = sign(trend); % gamma(i,j) = +/- 1
@@ -121,7 +123,7 @@ for iw = 1:iWeights
                     
                     
                     %% Returns
-                    %One day price difference
+                    % One day price difference
                     deltaP = diff(ClPR); % daily return
                     deltaP = [deltaP; zeros(1, col)];
                     
@@ -167,14 +169,14 @@ for iw = 1:iWeights
             for y = 1:length(dates2)
                 Holdings(y) = nanmean(nanmean(HOLDINGS(y,:,:)));
             end
-            %{
-            figure(1)
+%             %{
+            figure()
             plot(dates2, Holdings);
             ylabel 'Holdings [$]'
             xlabel 'Year'
             title 'Value of holdings over time, using MAC'
             datetick;
-            %}
+%             %}
             
         end
         g = MEANSHARPE;
