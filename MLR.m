@@ -5,17 +5,15 @@
     of assets and takes a position according to the predicion and the
     standard deviation of each asset in the asset group.
     
-    The information quotient is calculated and the development of
+    The Information Ratio is calculated and the development of
     the holding of each asset class is plotted for multiple tuning
     parameters.
  
    2016 Iliam Barkino, Mattias Bertolino
 %}
 
-
 clear;
 tic;
-
 
 %% Setup
 % Load Data
@@ -73,8 +71,9 @@ for asset = assetIndex
         % Remove NaN's
         % Start at 02-Jan-2009
         % End at 06-Jan-2016
-        [datesNoNaN, clPr] = removeNaN(dates(timeFrame - predTime - trainTime:end), ...
-            closingPrice(timeFrame - predTime - trainTime:end, :));
+        [datesNoNaN, clPr] = removeNaN(dates(timeFrame - predTime - ...
+            trainTime:end), closingPrice(timeFrame - predTime - ...
+            trainTime:end, :));
         tradePeriods = floor((length(datesNoNaN) - trainTime)/predTime);
         diffClPr = diff(clPr);
         
@@ -97,16 +96,10 @@ for asset = assetIndex
         ridgeEye = diag(repelem(lambda, 1, lag(l)*Ld)*eye(Ll*lag(l)*Ld));
         
         
-        %% Regression
-        % Data relating assets to be predicted, y, and assets to use as
-        % predictors, x. For each day in a tradePeriods sized window y and x are
-        % related.
-        % After a prediction the training window is moved so only the latest data
-        % points are used as training data as they are assumed to be more accurate
-        
+        %% Regression        
         % Create a waitbar to show calculation time
         h = waitbar(0,['Lag: ' num2str(l) '/' num2str(length(lag)) ...
-            ', Asset class: ' num2str(asset) '/' num2str(assetIndex(end))]);
+            ', Class: ' num2str(asset) '/' num2str(assetIndex(end))]);
         
         % Sliding window
         for j = 1:tradePeriods
@@ -131,9 +124,9 @@ for asset = assetIndex
             % Standardize data
             [xTrainStd, mux, sigmax] = zscore(xTrain);
             
-            % For every invested asset, calculate the regression coefficients
-            % using both OLS and Ridge
-            b(:,1:Ll*Ld) = RidgeRegress(yTrain, xTrainStd, lambda, ridgeEye);
+            % For every invested asset, calculate the regression 
+            % coefficients using both OLS and Ridge
+            b = RidgeRegress(yTrain, xTrainStd, lambda, ridgeEye);
             
             
             %% Prediction & Validation
@@ -149,7 +142,8 @@ for asset = assetIndex
             % Smart positioning (optional)
             if smart > 0.5
                 if j > stdTime
-                    gamma(j,:) = yPred(j,:)./mean(abs(yPred(j-stdTime:j,:)));
+                    gamma(j,:) = yPred(j,:) ...
+                        ./mean(abs(yPred(j-stdTime:j,:)));
                 else
                     gamma(j,:) = yPred(j,:)./mean(abs(yPred(1:j,:)));
                 end
@@ -173,11 +167,12 @@ for asset = assetIndex
         
         %% Strategy
         % gamma - is the position to take for each asset
+        % holdingTot - is the evolution of a holding in each asset group
+        % infoR - is the Information Ratio for a strategy
         % ret - is the risk adjusted return for each asset
         % retTot - is the total r.a return for each ridge tuning param
-        % infoQ - is the Information Quotient for a strategy
-        % holdingTot - is the evolution of a holding in each asset group
-        
+        % risk - is the risk aversion coefficient
+
         % Positioning
         if smart > 0.5
             gamma(abs(gamma) > 1) = sign(gamma(abs(gamma) > 1));
@@ -187,12 +182,14 @@ for asset = assetIndex
         
         % Returns and Sharpe for each asset (/Ld)
         ret = repelem(yVal,1,Ll).*gamma;
-        retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), 1:Ll, 'uni', 0))/Ld;
-        infoQ = mean(retTot)./std(retTot)*sqrt(250/predTime);
+        retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), ... 
+            1:Ll, 'uni', 0))/Ld;
+        infoR = mean(retTot)./std(retTot)*sqrt(250/predTime);
         
         % Calculate the development of the total holding for each lambda
         for ih = 2:length(ret(:,1))
-            holdingTot(ih,:) = holdingTot(ih - 1, :).*(1 + risk*retTot(ih - 1, :));
+            holdingTot(ih,:) = holdingTot(ih - 1, :) ...
+                .*(1 + risk*retTot(ih - 1, :));
         end
         
         
@@ -205,7 +202,8 @@ for asset = assetIndex
         str = cellstr(num2str(lambda', 'lambda = %d'));
         legend(str, 'Location', 'NorthWest');
         datetick('x')
-        disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(infoQ)])
+        disp(['Sharpe ratio for lag ' num2str(lag(l)) ...
+            ', and asset ' num2str(asset) ': ' num2str(infoR)])
         close(h);
     end
 end
