@@ -187,7 +187,7 @@ for iw = 1:iWeights
                 end
             end
             %{
-            holdingsMatrix (holdingsMatrix ==0) = nan;
+            holdingsMatrix (holdingsMatrix == 0) = nan;
             Holdings = zeros(length(dates2),1);
             
             for y = 1:length(dates2)
@@ -198,13 +198,15 @@ for iw = 1:iWeights
         end
         %Finding maximal Information Ratio between aall combinations of
         %long and short filter length
-        IR=infoRatios;
-        IR(IR==0)=nan;
+        IR = infoRatios;
+        IR(IR == 0) = nan;
         maxIR(iw,im) = nanmax(nanmax(nanmax(IR)));
+        
         %Finding what combination of long and short filter length that
         %yielded maximal Information Ratio
-        [iLong, iShort] = find (IR==maxIR(iw,im));
-        if length(iLong)>1
+        [iLong, iShort] = find (IR == maxIR(iw,im));
+        
+        if length(iLong) > 1
             iLong = floor(mean(iLong));
             iShort = floor(mean(iShort));
         end
