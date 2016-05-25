@@ -112,7 +112,7 @@ for iw = 1:iWeights
                     
                     %% Positioning
                     % To be able to redo the matrixes later
-                    [row, col] = size(clPr2); 
+                    [row, col] = size(clPr2);
                     trend = avgClS - avgClL;
                     
                     %Smart positioning
@@ -143,7 +143,7 @@ for iw = 1:iWeights
                     %One day price difference
                     deltaP = diff(clPr2); %daily return
                     %row of zeros for later calculations
-                    deltaP = [deltaP;zeros(1,col)]; 
+                    deltaP = [deltaP;zeros(1,col)];
                     
                     %Standard deviation for returns
                     stdev1 = zeros(length(clPr2)-stdevDays,col);
@@ -154,7 +154,7 @@ for iw = 1:iWeights
                     end
                     %Dimension fit
                     stdev1 = [ones(stdevDays,col);stdev1];
-
+                    
                     
                     %Adjust for standard deviation dimension
                     deltaP(1:stdevDays,:) = zeros(stdevDays,col);
@@ -163,20 +163,20 @@ for iw = 1:iWeights
                     ret1 = deltaP .*gamma./stdev1;
                     %Mean return of all assets on each day
                     retTot1 = sum(ret1,2)/col;
-                  
+                    
                     
                     %% Investing
                     %Developement of invested capital
                     holdings = zeros(length(dates2), col);
                     holdings(1,:) = 10000; %Starting att $10,000
-                          
+                    
                     for ii = 2:length(ret1)
                         %Calculating developement
                         holdings(ii,:) = holdings(ii-1,:).*...
                             (1+risk*ret1(ii,:));
                     end
                     
-                    %Storing the mean developement for all assets in a 
+                    %Storing the mean developement for all assets in a
                     %specific group
                     holdingsMatrix(:,l,s) = mean(holdings,2);
                     
