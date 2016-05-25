@@ -209,7 +209,7 @@ for iw = 1:iWeights
         maxIR(iw,im) = nanmax(nanmax(nanmax(IR)));
         %Finding what combination of long and short filter length that
         %yielded maximal Information Ratio
-        [iLong, iShort] = find (IR==maxSharpe);
+        [iLong, iShort] = find (IR==maxIR(iw,im));
         if length(iLong)>1
             iLong = floor(mean(iLong));
             iShort = floor(mean(iShort));
