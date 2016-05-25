@@ -50,7 +50,6 @@ infoRatios = zeros(length(longVector),length(shortVector));
 
 %% Starting looping for all possible combinations
 for iw = 1:iWeights
-    
     for im = 1:iMarkets
         
         %Bar that shows status of the run
@@ -88,7 +87,6 @@ for iw = 1:iWeights
                         wLong = ones(1, long)/long;
                         wShort = ones(1, short)/short;
                     elseif iw == 2
-                        
                         % Exponential Weights
                         alphaLong = 2/(long + 1); % Smoothing Param
                         wLong = repmat(1-alphaLong, 1, long).^(1:long);
@@ -96,13 +94,10 @@ for iw = 1:iWeights
                         alphaShort = 2/(short + 1); % Smoothing Param
                         wShort = repmat(1-alphaShort, 1, short).^(1:short);
                         wShort = wShort/sum(wShort);
-                        
                     else
-                        
                         %Linear Weights (sums of digits)
                         wLong = 1/((long+1)*(long/2)) * flipud((1:long)');
                         wShort = 1/((short+1)*(short/2)) * flipud((1:short)');
-                        
                     end
                     
                     %Filters
@@ -154,7 +149,6 @@ for iw = 1:iWeights
                     end
                     %Dimension fit
                     stdev1 = [ones(stdevDays,col);stdev1];
-                    
                     
                     %Adjust for standard deviation dimension
                     deltaP(1:stdevDays,:) = zeros(stdevDays,col);
