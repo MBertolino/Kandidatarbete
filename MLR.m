@@ -1,6 +1,5 @@
 %{
     Multiple Linear Regression - main program
-
     Description:
     Computes regression vector, predicts a change in price in a group
     of assets and takes a position according to the predicion and the
