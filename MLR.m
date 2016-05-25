@@ -1,13 +1,20 @@
-% try
+%{
+    Multiple Linear Regression - main program
+
+    Description:
+    Computes regression vector, predicts a change in price in a group
+    of assets and takes a position according to the predicion and the
+    standard deviation of each asset in the asset group.
+    
+    The information quotient is calculated and the development of
+    the holding of each asset class is plotted for multiple tuning
+    parameters.
+ 
+   2016 Iliam Barkino, Mattias Bertolino
+%}
+
 
 clear;
-%{
-y = b1x1 + b2x2 + ... + bnxn + e
-y - Dependent assets in which to choose a long or short position
-    Price change from today to predTime days ahead
-x - Assumed independent assets used to make a prediction
-    Price change from day t-1 to t in the range of lag days back
-%}
 tic;
 
 
@@ -16,16 +23,16 @@ tic;
 load('KexJobbData.mat')
 
 % Prediction Param
-trainTime = 2500;
+trainTime = 1640;
 predTime = 21;                 % How many days to predict
-timeFrame = 7448;              % Frame to remove NaN
-lag = [300];
+timeFrame = 7448;              % Indicates where to start in removeNaN
+lag = [100];
 lambda = [0 1e0 1e1 1e2 1e3 1e4];
 Ll = length(lambda);
 stdTime = 99;
 
 % Investment Param
-assetIndex = 1:7;
+assetIndex = 1;
 bankStart = 10000;
 risk = 0.05;
 smart = 1;                     % 0 or 1, 1 uses smart positioning, 0 don't
@@ -33,6 +40,7 @@ smart = 1;                     % 0 or 1, 1 uses smart positioning, 0 don't
 % Assets
 name = {'Equities 1', 'Equities 2', 'Fixed Income 1', 'Fixed Income 2', ...
     'Commodities 1', 'Commodities 2', 'Foreign Exchange'};
+
 % Calculate all asset classes at ones
 for asset = assetIndex
     switch(asset)
@@ -61,13 +69,13 @@ for asset = assetIndex
     Ld = length(depAsset(:,1));
     Li = length(indepAsset(:,1));
     
-    
+    % Repeat for every lag setting
     for l = 1:length(lag)
         % Remove NaN's
         % Start at 02-Jan-2009
         % End at 06-Jan-2016
-        [datesNoNaN, clPr] = removeNaN(dates(timeFrame-predTime -trainTime:end), ...
-            closingPrice(timeFrame-predTime-trainTime:end, :));
+        [datesNoNaN, clPr] = removeNaN(dates(timeFrame - predTime - trainTime:end), ...
+            closingPrice(timeFrame - predTime - trainTime:end, :));
         tradePeriods = floor((length(datesNoNaN) - trainTime)/predTime);
         diffClPr = diff(clPr);
         
@@ -85,8 +93,8 @@ for asset = assetIndex
         datesAdjusted = holdingTot;
         gamma = zeros(tradePeriods, Ll*Ld);
         
-        % Not an attractive solution but much faster to keep ridgeEye
-        % outside RidgeRegression.m since it is redone unneccesarily
+        % Speed up - This matrix needs to be done for every lag
+        % when regressing, but not for every calculation.
         ridgeEye = diag(repelem(lambda, 1, lag(l)*Ld)*eye(Ll*lag(l)*Ld));
         
         
@@ -122,7 +130,6 @@ for asset = assetIndex
             end
             
             % Standardize data
-            %             [yTrainStd, muy, sigmay] = zscore(yTrain);
             [xTrainStd, mux, sigmax] = zscore(xTrain);
             
             % For every invested asset, calculate the regression coefficients
@@ -169,10 +176,8 @@ for asset = assetIndex
         % gamma - is the position to take for each asset
         % ret - is the risk adjusted return for each asset
         % retTot - is the total r.a return for each ridge tuning param
-        % sharpe - is the information quotient for a strategy
-        % holding - is the evolution of a holding for each asset
-        % holdingTot - is the evolution of a holding for each asset
-        % group
+        % infoQ - is the Information Quotient for a strategy
+        % holdingTot - is the evolution of a holding in each asset group
         
         % Positioning
         if smart > 0.5
@@ -184,7 +189,7 @@ for asset = assetIndex
         % Returns and Sharpe for each asset (/Ld)
         ret = repelem(yVal,1,Ll).*gamma;
         retTot = cell2mat(arrayfun(@(x) sum(ret(:, x:Ll:end), 2), 1:Ll, 'uni', 0))/Ld;
-        sharpe = mean(retTot)./std(retTot)*sqrt(250/predTime);
+        infoQ = mean(retTot)./std(retTot)*sqrt(250/predTime);
         
         % Calculate the development of the total holding for each lambda
         for ih = 2:length(ret(:,1))
@@ -196,22 +201,14 @@ for asset = assetIndex
         % Plot the evolution of the total holding
         figure()
         plot(datesAdjusted, holdingTot)
-        ylabel('Holding [$]') % ;)
-        xlabel('Time [Days]')
-        title(['Holding using MLR on ' name(asset) ' with lag ' lag(l)])
+        ylabel('Holding [$]')
+        xlabel('Time [Year]')
         str = cellstr(num2str(lambda', 'lambda = %d'));
         legend(str, 'Location', 'NorthWest');
         datetick('x')
-        disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(sharpe)])
+        disp(['Sharpe ratio for lag ' num2str(lag(l)) ', and asset ' num2str(asset) ': ' num2str(infoQ)])
         close(h);
     end
 end
 hold off;
 toc;
-load('handel')
-sound(y,Fs)
-
-% catch
-%     setpref('Internet','E_mail','mattias.bertolino@gmail.com');
-%     sendmail('mattias.bertolino@gmail.com','Calculation failed.')
-% end
