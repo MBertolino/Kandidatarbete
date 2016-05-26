@@ -4,7 +4,7 @@
 % 50 and 2000 respectively 25 and 500.
 % The assets were divided into seven groups in order to compare the results
 % to the results from MLR.
-% 
+%
 % 2016 Iliam Barkino, Mattias Bertolino
 
 
@@ -21,15 +21,13 @@ clPr = clPr(2062:end,:);
 
 
 %% Parameters
-% longVector = (50:50:2000); % Different lengths of long filter
-% shortVector = (25:25:500); % Different lengths of short filter
-longVector = 200;
-shortVector = 50;
+longVector = (50:50:2000); % Different lengths of long filter
+shortVector = (25:25:500); % Different lengths of short filter
 
 stdevDays = 21; % Number of days used to calculate the standard deviation
 
-iWeights = 1; % Number of positioning strategies
-iMarkets = 1; % Number of asset groups
+iWeights = 3; % Number of positioning strategies
+iMarkets = 7; % Number of asset groups
 iGamma = 1; % Binary switch to determine what positioning strategy to use
 
 % Matrix containing all obtained maximal values of information ratio
@@ -41,13 +39,13 @@ longShort = zeros(iWeights, iMarkets, 2);
 
 % Matrix containing all developements of invested capital for different
 % combinations of long and short filters
-holdingsMatrix = zeros(length(dates2),length(longVector),...
+holdingsMatrix = zeros(length(dates2), length(longVector),...
     length(shortVector));
 risk = 0.05; % risk aversion
 
 % Matrix containing all information ratios for different combinations of
 % long and short filters
-infoRatios = zeros(length(longVector),length(shortVector));
+infoRatios = zeros(length(longVector), length(shortVector));
 
 
 %% Starting looping for all possible combinations
@@ -57,7 +55,7 @@ for iw = 1:iWeights
         % Bar that shows status of the run
         h = waitbar(0,['Weight type: ' num2str(iw) '/' num2str(iWeights) ...
             ', Market cathegory: ' num2str(im) '/' num2str(iMarkets)]);
-        waitbar(im/(iMarkets*iWeights)+(iw-1)/iWeights)
+        waitbar(im/(iMarkets*iWeights) + (iw - 1)/iWeights)
         
         switch(im) % Deciding which group of assets to evaluate
             case(1)
@@ -117,7 +115,7 @@ for iw = 1:iWeights
                         absTrend = abs(trend);
                         absMeans = zeros(row-short:col);
                         for mm = 1:row-short
-                            absMeans(mm,:) = mean(absTrend(mm:mm+short, :));
+                            absMeans(mm,:) = mean(absTrend(mm:mm + short, :));
                         end
                         trendMean = [ones(short,col); absMeans];
                         gamma = trend./trendMean;
@@ -130,7 +128,7 @@ for iw = 1:iWeights
                         [row2, col2] = find(gamma == 0);
                         for i = 1:length(row2)
                             gamma(row2(i), col2(i)) = ...
-                                gamma(row2(i)-1, col2(i));
+                                gamma(row2(i) - 1, col2(i));
                         end
                     end
                     
@@ -139,12 +137,12 @@ for iw = 1:iWeights
                     % One day price difference
                     deltaP = diff(clPr2); % daily return
                     % row of zeros for later calculations
-                    deltaP = [deltaP;zeros(1,col)];
+                    deltaP = [deltaP; zeros(1, col)];
                     
                     % Standard deviation for returns
                     stdev1 = zeros(length(clPr2) - stdevDays, col);
                     for i = 1:length(clPr2) - stdevDays
-                        A = deltaP(i:i+stdevDays - 1, :);
+                        A = deltaP(i:i + stdevDays - 1, :);
                         stdev1(i,:) = std(A);
                     end
                     % Dimension fit
@@ -166,13 +164,13 @@ for iw = 1:iWeights
                     
                     for ii = 2:length(ret1)
                         % Calculating developement
-                        holdings(ii,:) = holdings(ii-1,:).*...
+                        holdings(ii,:) = holdings(ii - 1,:).*...
                             (1 + risk*ret1(ii,:));
                     end
                     
                     % Storing the mean developement for all assets in a
                     % specific group
-                    holdingsMatrix(:,l,s) = mean(holdings,2);
+                    holdingsMatrix(:,l,s) = mean(holdings, 2);
                     
                     %Calculating mean return
                     meanProffit = mean((ret1(22:end, :)));
@@ -188,7 +186,7 @@ for iw = 1:iWeights
             end
             %{
             holdingsMatrix (holdingsMatrix == 0) = nan;
-            Holdings = zeros(length(dates2),1);
+            Holdings = zeros(length(dates2), 1);
             
             for y = 1:length(dates2)
                 Holdings(y) = nanmean(nanmean(holdingsMatrix(y,:,:)));
