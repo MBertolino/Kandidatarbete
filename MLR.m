@@ -1,16 +1,14 @@
-%{
-    Multiple Linear Regression - main program
-    Description:
-    Computes regression vector, predicts a change in price in a group
-    of assets and takes a position according to the predicion and the
-    standard deviation of each asset in the asset group.
-    
-    The Information Ratio is calculated and the development of
-    the holding of each asset class is plotted for multiple tuning
-    parameters.
- 
-   2016 Iliam Barkino, Mattias Bertolino
-%}
+%    Multiple Linear Regression - main program
+%    Description:
+%    Computes regression vector, predicts a change in price in a group
+%    of assets and takes a position according to the predicion and the
+%    standard deviation of each asset in the asset group.
+%     
+%    The Information Ratio is calculated and the development of
+%    the holding of each asset class is plotted for multiple tuning
+%    parameters.
+%  
+%    2016 Iliam Barkino, Mattias Bertolino
 
 clear;
 tic;
