@@ -3,7 +3,7 @@
 Bachelor thesis with Iliam Barkino spring 2015 at Uppsala University, IT-institutionen.
 
 Project description:
-In this study we investigate how regression analysis and basic moving average filters can be used to predict future return of an asset in order to invest in futures contracts. The backtracked investments were tested with risk-adjusted measures and evaluated thereafter.
+In this study we investigate how regression analysis and moving average filters can be used to predict future return of an asset in order to invest in futures contracts. The backtracked investments were tested with risk-adjusted measures and evaluated thereafter.
 
 For the regression, both OLS and ridge regression were used and the filter was swept in order to only use fresh data for the prediction.
 
