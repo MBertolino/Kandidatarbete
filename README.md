@@ -1,6 +1,6 @@
 # Kandidatarbete
 
-Bachelor thesis with Iliam Barkino spring 2015 at Uppsala University, IT-institutionen.
+Bachelor thesis by Iliam Barkino and Mattias Bertolino spring 2015 at Uppsala University, IT-institutionen.
 
 Project description:
 In this study we investigate how regression analysis and moving average filters can be used to predict future return of an asset in order to invest in futures contracts. The backtracked investments were tested with risk-adjusted measures and evaluated thereafter.
