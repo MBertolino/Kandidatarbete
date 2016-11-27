@@ -11,7 +11,7 @@ Key learning points include:
 1. Question why a certain predictor should be considered.
 2. Design the filter(s) to match the characteristics of a certain variable.
 
-For questions, please contact me at mattias.bertolino@gmail.com.
+For questions, please contact us at iliam.barkino@gmail.com or mattias.bertolino@gmail.com.
 
 Acknowledgement:
 We, the authors, would like to thank our families and friends for their love, for their con-
